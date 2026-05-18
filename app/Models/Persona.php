@@ -19,4 +19,16 @@ class Persona extends Model
         'direccion',
         'fecha_nacimiento',
     ];
+
+    protected $casts = [
+        'fecha_nacimiento' => 'date',
+    ];
+
+    /**
+     * Obtener la cuenta de usuario única asociada a esta persona.
+     */
+    public function user()
+    {
+        return $this->hasOne(User::class, 'persona_id');
+    }
 }

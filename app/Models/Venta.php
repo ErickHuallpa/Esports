@@ -12,7 +12,7 @@ class Venta extends Model
     protected $table = 'ventas';
 
     protected $fillable = [
-        'cliente_id',
+        'user_id',
         'pago_id',
         'precio_total',
         'descuento_aplicado',
@@ -27,5 +27,27 @@ class Venta extends Model
             'descuento_aplicado' => 'decimal:2',
             'fecha_venta' => 'datetime',
         ];
+    }
+
+    // RELACIONES
+
+    public function user()
+    {
+        return $this->belongsTo(User::class, 'user_id');
+    }
+
+    public function pago()
+    {
+        return $this->belongsTo(Pago::class, 'pago_id');
+    }
+
+    public function detalles()
+    {
+        return $this->hasMany(DetalleVenta::class, 'venta_id');
+    }
+
+    public function orden()
+    {
+        return $this->hasOne(Orden::class, 'venta_id');
     }
 }

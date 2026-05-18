@@ -17,9 +17,6 @@ return new class extends Migration
             $table->string('marca', 100)->nullable();
             $table->decimal('precio_compra', 10, 2);
             $table->decimal('precio_venta', 10, 2);
-            $table->integer('stock');
-            $table->string('tallas_disponibles', 100)->nullable();
-            $table->string('colores_disponibles', 100)->nullable();
             $table->text('imagen_url')->nullable();
             $table->text('modelo_3d_url')->nullable();
             $table->boolean('visible')->default(true);

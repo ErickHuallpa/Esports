@@ -36,4 +36,16 @@ class Envio extends Model
             'costo_envio' => 'decimal:2',
         ];
     }
+
+    // RELACIONES
+
+    public function orden()
+    {
+        return $this->belongsTo(Orden::class, 'orden_id');
+    }
+
+    public function adminAsignado()
+    {
+        return $this->belongsTo(User::class, 'admin_asignado');
+    }
 }

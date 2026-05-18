@@ -19,9 +19,6 @@ class Producto extends Model
         'marca',
         'precio_compra',
         'precio_venta',
-        'stock',
-        'tallas_disponibles',
-        'colores_disponibles',
         'imagen_url',
         'modelo_3d_url',
         'visible',
@@ -36,5 +33,32 @@ class Producto extends Model
             'visible' => 'boolean',
             'agotado' => 'boolean',
         ];
+    }
+
+    // RELACIONES
+
+    public function categoria()
+    {
+        return $this->belongsTo(Categoria::class, 'categoria_id');
+    }
+
+    public function proveedor()
+    {
+        return $this->belongsTo(Proveedor::class, 'proveedor_id');
+    }
+
+    public function variantes()
+    {
+        return $this->hasMany(ProductoVariante::class, 'producto_id');
+    }
+
+    public function ofertas()
+    {
+        return $this->hasMany(Oferta::class, 'producto_id');
+    }
+
+    public function resenas()
+    {
+        return $this->hasMany(Resena::class, 'producto_id');
     }
 }

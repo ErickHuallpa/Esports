@@ -10,14 +10,18 @@ return new class extends Migration
     {
         Schema::create('resenas', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('cliente_id')->constrained('clientes');
-            $table->foreignId('producto_id')->constrained('productos');
+            
+            // Apunta al usuario (antes cliente_id)
+            $table->foreignId('user_id')->constrained('users'); 
+            
+            $table->foreignId('producto_id')->constrained('productos')->onDelete('cascade');
             $table->tinyInteger('calificacion');
             $table->text('comentario')->nullable();
             $table->timestamp('fecha_resena')->useCurrent();
             $table->timestamps();
 
-            $table->unique(['cliente_id', 'producto_id']);
+            // Regla estricta: Un usuario solo puede dejar una reseña por producto
+            $table->unique(['user_id', 'producto_id']);
         });
     }
 

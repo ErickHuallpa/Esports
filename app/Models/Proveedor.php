@@ -25,4 +25,12 @@ class Proveedor extends Model
     protected $casts = [
         'activo' => 'boolean',
     ];
+
+    /**
+     * Obtener todos los productos suministrados por este proveedor.
+     */
+    public function productos()
+    {
+        return $this->hasMany(Producto::class, 'proveedor_id');
+    }
 }

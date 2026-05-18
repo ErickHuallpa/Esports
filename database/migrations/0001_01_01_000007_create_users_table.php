@@ -10,11 +10,14 @@ return new class extends Migration
     {
         Schema::create('users', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('persona_id')->unique()->constrained('personas');
+            $table->foreignId('persona_id')->unique()->constrained('personas')->onDelete('cascade');
+            
+            // Reemplazamos el enum por la clave foránea del Rol
+            $table->foreignId('rol_id')->constrained('roles');
+            
             $table->string('email', 150)->unique();
             $table->string('username', 80)->unique();
             $table->string('password');
-            $table->enum('tipo_usuario', ['cliente', 'admin']);
             $table->boolean('activo')->default(true);
             $table->timestamp('ultimo_login')->nullable();
             $table->timestamp('email_verified_at')->nullable();

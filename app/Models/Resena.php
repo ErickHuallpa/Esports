@@ -12,18 +12,28 @@ class Resena extends Model
     protected $table = 'resenas';
 
     protected $fillable = [
-        'cliente_id',
+        'user_id',
         'producto_id',
         'calificacion',
         'comentario',
-        'fecha_resena',
     ];
 
     protected function casts(): array
     {
         return [
-            'calificacion' => 'integer',
             'fecha_resena' => 'datetime',
         ];
+    }
+
+    // RELACIONES
+
+    public function user()
+    {
+        return $this->belongsTo(User::class, 'user_id');
+    }
+
+    public function producto()
+    {
+        return $this->belongsTo(Producto::class, 'producto_id');
     }
 }

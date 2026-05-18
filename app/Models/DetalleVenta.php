@@ -13,7 +13,7 @@ class DetalleVenta extends Model
 
     protected $fillable = [
         'venta_id',
-        'producto_id',
+        'producto_variante_id',
         'cantidad',
         'precio_unitario_compra',
         'precio_unitario_venta',
@@ -29,5 +29,17 @@ class DetalleVenta extends Model
             'descuento_unitario' => 'decimal:2',
             'subtotal' => 'decimal:2',
         ];
+    }
+
+    // RELACIONES
+
+    public function venta()
+    {
+        return $this->belongsTo(Venta::class, 'venta_id');
+    }
+
+    public function variante()
+    {
+        return $this->belongsTo(ProductoVariante::class, 'producto_variante_id');
     }
 }

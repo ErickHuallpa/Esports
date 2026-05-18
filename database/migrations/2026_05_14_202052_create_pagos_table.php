@@ -11,13 +11,22 @@ return new class extends Migration
         Schema::create('pagos', function (Blueprint $table) {
             $table->id();
             $table->foreignId('tipo_pago_id')->constrained('tipo_pagos');
-            $table->foreignId('cliente_id')->constrained('clientes');
+            
+            // Apunta al usuario que compró (antes cliente_id)
+            $table->foreignId('user_id')->constrained('users'); 
+            
             $table->decimal('monto', 10, 2);
             $table->enum('estado', ['pendiente', 'verificado', 'rechazado']);
             $table->text('comprobante_url')->nullable();
-            $table->text('motivo_rechazo')->nullable();
+            
+            // Vital para la comunicación en pagos rechazados
+            $table->text('motivo_rechazo')->nullable(); 
+            
             $table->timestamp('fecha_pago')->nullable();
-            $table->foreignId('verificado_por')->nullable()->constrained('administradores');
+            
+            // Apunta al usuario admin que verificó (antes administradors)
+            $table->foreignId('verificado_por')->nullable()->constrained('users'); 
+            
             $table->timestamp('fecha_verificacion')->nullable();
             $table->text('observaciones')->nullable();
             $table->timestamps();

@@ -10,18 +10,21 @@ return new class extends Migration
     {
         Schema::create('envios', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('orden_id')->constrained('ordenes');
+            $table->foreignId('orden_id')->constrained('ordenes')->onDelete('cascade');
             $table->text('direccion_destino')->nullable();
             $table->string('ciudad_destino', 100)->nullable();
             $table->string('zona_destino', 100)->nullable();
             $table->string('ruta', 150)->nullable();
             $table->enum('estado_envio', ['preparando', 'en camino', 'entregado', 'fallido']);
-            $table->foreignId('admin_asignado')->nullable()->constrained('administradores');
+            
+            // Mantenemos el nombre descriptivo de la columna, pero la conectamos a 'users'
+            $table->foreignId('admin_asignado')->nullable()->constrained('users');
+            
             $table->string('codigo_seguimiento', 100)->nullable();
             $table->date('fecha_despacho')->nullable();
             $table->date('fecha_entrega_estimada')->nullable();
             $table->date('fecha_entrega_real')->nullable();
-            $table->string('responsable_entrega', 150)->nullable();
+            $table->string('responsable_entrega', 150)->nullable(); // Por si se usa un chofer o empresa externa
             $table->decimal('costo_envio', 10, 2)->nullable();
             $table->timestamps();
         });

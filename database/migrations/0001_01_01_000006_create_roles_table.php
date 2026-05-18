@@ -8,17 +8,16 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('administradores', function (Blueprint $table) {
+        Schema::create('roles', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('usuario_id')->unique()->constrained('users');
-            $table->string('departamento', 100)->nullable();
-            $table->enum('nivel_acceso', ['total', 'parcial']);
+            $table->string('nombre', 50)->unique(); // Ej: 'Administrador', 'Cliente'
+            $table->text('descripcion')->nullable();
             $table->timestamps();
         });
     }
 
     public function down(): void
     {
-        Schema::dropIfExists('administradores');
+        Schema::dropIfExists('roles');
     }
 };

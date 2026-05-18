@@ -15,4 +15,12 @@ class TipoPago extends Model
         'nombre',
         'descripcion',
     ];
+
+    /**
+     * Obtener todos los registros de pagos que utilizaron este tipo de pago.
+     */
+    public function pagos()
+    {
+        return $this->hasMany(Pago::class, 'tipo_pago_id');
+    }
 }

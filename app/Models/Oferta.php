@@ -31,4 +31,11 @@ class Oferta extends Model
             'activa' => 'boolean',
         ];
     }
+
+    // RELACIONES
+
+    public function producto()
+    {
+        return $this->belongsTo(Producto::class, 'producto_id');
+    }
 }

@@ -12,14 +12,13 @@ class Inventario extends Model
     protected $table = 'inventarios';
 
     protected $fillable = [
-        'producto_id',
-        'admin_id',
+        'producto_variante_id',
+        'user_id',
         'tipo_movimiento',
         'cantidad',
         'stock_anterior',
         'stock_resultante',
         'motivo',
-        'fecha_movimiento',
     ];
 
     protected function casts(): array
@@ -27,5 +26,17 @@ class Inventario extends Model
         return [
             'fecha_movimiento' => 'datetime',
         ];
+    }
+
+    // RELACIONES
+
+    public function variante()
+    {
+        return $this->belongsTo(ProductoVariante::class, 'producto_variante_id');
+    }
+
+    public function user()
+    {
+        return $this->belongsTo(User::class, 'user_id');
     }
 }

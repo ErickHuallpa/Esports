@@ -13,7 +13,7 @@ class Pago extends Model
 
     protected $fillable = [
         'tipo_pago_id',
-        'cliente_id',
+        'user_id',
         'monto',
         'estado',
         'comprobante_url',
@@ -31,5 +31,27 @@ class Pago extends Model
             'fecha_pago' => 'datetime',
             'fecha_verificacion' => 'datetime',
         ];
+    }
+
+    // RELACIONES
+
+    public function tipoPago()
+    {
+        return $this->belongsTo(TipoPago::class, 'tipo_pago_id');
+    }
+
+    public function user()
+    {
+        return $this->belongsTo(User::class, 'user_id');
+    }
+
+    public function verificador()
+    {
+        return $this->belongsTo(User::class, 'verificado_por');
+    }
+
+    public function venta()
+    {
+        return $this->hasOne(Venta::class, 'pago_id');
     }
 }

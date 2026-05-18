@@ -13,7 +13,26 @@ class Orden extends Model
 
     protected $fillable = [
         'venta_id',
-        'cliente_id',
+        'user_id',
         'estado_orden',
+        'ciudad_destino',
+        'direccion_envio',
     ];
+
+    // RELACIONES
+
+    public function venta()
+    {
+        return $this->belongsTo(Venta::class, 'venta_id');
+    }
+
+    public function user()
+    {
+        return $this->belongsTo(User::class, 'user_id');
+    }
+
+    public function envio()
+    {
+        return $this->hasOne(Envio::class, 'orden_id');
+    }
 }
