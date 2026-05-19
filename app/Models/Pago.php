@@ -39,7 +39,7 @@ class Pago extends Model
     {
         return $this->belongsTo(TipoPago::class, 'tipo_pago_id');
     }
-
+    
     public function user()
     {
         return $this->belongsTo(User::class, 'user_id');

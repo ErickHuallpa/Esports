@@ -33,21 +33,22 @@
                             <span class="text-xs font-bold text-red-600 uppercase tracking-wider bg-red-50 px-2 py-1 rounded">Panel Admin:</span>
                             <a href="{{ route('proveedores.index') }}" class="text-gray-700 hover:text-red-600 font-medium text-sm">Proveedores</a>
                             <a href="{{ route('productos.index') }}" class="text-gray-700 hover:text-red-600 font-medium text-sm">Productos</a>
-                            <a href="#" class="text-gray-700 hover:text-red-600 font-medium text-sm">Ofertas</a>
+                            <a href="{{ route('admin.pagos.index') }}" class="text-gray-700 hover:text-red-600 font-medium text-sm">Validar Pagos QR</a>
+                            <a href="{{ route('personal.envios.index') }}" class="text-gray-700 hover:text-purple-600 font-medium text-sm">Control Envíos</a>
                             <a href="#" class="text-gray-700 hover:text-red-600 font-medium text-sm">Usuarios</a>
 
                         @elseif(auth()->user()->rol->nombre === 'personal')
                             <span class="text-xs font-bold text-purple-600 uppercase tracking-wider bg-purple-50 px-2 py-1 rounded">Logística:</span>
                             <a href="#" class="text-gray-700 hover:text-purple-600 font-medium text-sm">Inventario</a>
-                            <a href="#" class="text-gray-700 hover:text-purple-600 font-medium text-sm">Control Envíos</a>
+                            <a href="{{ route('personal.envios.index') }}" class="text-gray-700 hover:text-purple-600 font-medium text-sm">Control Envíos</a>
 
                         @elseif(auth()->user()->rol->nombre === 'cajero')
                             <span class="text-xs font-bold text-green-600 uppercase tracking-wider bg-green-50 px-2 py-1 rounded">Caja:</span>
-                            <a href="#" class="text-gray-700 hover:text-green-600 font-medium text-sm">Validar Pagos QR</a>
+                            <a href="{{ route('admin.pagos.index') }}" class="text-gray-700 hover:text-green-600 font-medium text-sm">Validar Pagos QR</a>
                             <a href="#" class="text-gray-700 hover:text-green-600 font-medium text-sm">Ventas Confirmadas</a>
 
                         @elseif(auth()->user()->rol->nombre === 'cliente')
-                            <a href="#" class="text-gray-700 hover:text-blue-600 font-medium text-sm">Mis Pedidos</a>
+                            <a href="{{ route('cliente.pedidos') }}" class="text-gray-700 hover:text-blue-600 font-medium text-sm">Mis Pedidos</a>
                             <a href="#" class="text-gray-700 hover:text-blue-600 font-medium text-sm">Mis Reseñas</a>
                         @endif
                     @endif
@@ -106,6 +107,17 @@
         @if(session('error'))
             <div class="mb-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative shadow-sm" role="alert">
                 <span class="block sm:inline">{{ session('error') }}</span>
+            </div>
+        @endif
+
+        @if ($errors->any())
+            <div class="mb-4 bg-red-50 border border-red-400 text-red-700 px-4 py-3 rounded-lg shadow-sm" role="alert">
+                <strong class="font-bold text-sm">¡Hay detalles que revisar en tu solicitud!</strong>
+                <ul class="list-disc pl-5 mt-1 text-sm">
+                    @foreach ($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
             </div>
         @endif
 
@@ -175,9 +187,9 @@
                 <span class="text-lg font-bold text-gray-700">Total a Pagar:</span>
                 <span class="text-2xl font-black text-gray-900">Bs {{ number_format($totalPrice, 2) }}</span>
             </div>
-            <button class="w-full bg-blue-600 text-white font-bold py-3 px-4 rounded shadow-lg opacity-50 cursor-not-allowed" disabled>
+            <a href="{{ route('checkout.form') }}" class="w-full block bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded shadow-lg text-center transition {{ count($cartItems) == 0 ? 'opacity-50 pointer-events-none' : '' }}">
                 Confirmar Compra
-            </button>
+            </a>
         </div>
     </div>
 
