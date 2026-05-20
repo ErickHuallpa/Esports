@@ -12,10 +12,13 @@
             <div class="p-5 border-b">
                 <div class="flex justify-between items-start mb-2">
                     <span class="text-xs font-bold text-gray-500 uppercase">Orden #{{ $envio->orden_id }}</span>
+                    
                     @if($envio->estado_envio === 'preparando')
                         <span class="px-2 py-1 bg-amber-100 text-amber-800 text-xs font-bold rounded-full">Preparando</span>
                     @elseif($envio->estado_envio === 'en camino')
                         <span class="px-2 py-1 bg-blue-100 text-blue-800 text-xs font-bold rounded-full">En Camino</span>
+                    @elseif($envio->estado_envio === 'llego al destino')
+                        <span class="px-2 py-1 bg-teal-100 text-teal-800 text-xs font-bold rounded-full">Llegó a Destino</span>
                     @elseif($envio->estado_envio === 'entregado')
                         <span class="px-2 py-1 bg-green-100 text-green-800 text-xs font-bold rounded-full">Entregado</span>
                     @else
@@ -41,7 +44,8 @@
                     <select name="estado_envio" class="mt-1 block w-full rounded border-gray-300 p-2 text-sm bg-white font-semibold focus:ring-purple-500">
                         <option value="preparando" {{ $envio->estado_envio == 'preparando' ? 'selected' : '' }}>Preparando Empaque</option>
                         <option value="en camino" {{ $envio->estado_envio == 'en camino' ? 'selected' : '' }}>En Camino / Despachado</option>
-                        <option value="entregado" {{ $envio->estado_envio == 'entregado' ? 'selected' : '' }}>Entregado al Cliente</option>
+                        <option value="llego al destino" {{ $envio->estado_envio == 'llego al destino' ? 'selected' : '' }}>Llegó al Destino (Agencia/Ciudad)</option>
+                        <option value="entregado" {{ $envio->estado_envio == 'entregado' ? 'selected' : '' }}>Entregado al Cliente Final</option>
                         <option value="fallido" {{ $envio->estado_envio == 'fallido' ? 'selected' : '' }}>Fallido / Devolución</option>
                     </select>
                 </div>

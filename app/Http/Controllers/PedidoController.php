@@ -38,11 +38,12 @@ class PedidoController extends Controller
         return view('personal.envios.index', compact('envios'));
     }
 
-    // Actualiza el estado del paquete (En camino, Entregado, etc)
+    // Actualiza el estado del paquete con el nuevo flujo de 5 pasos
     public function actualizarEstadoEnvio(Request $request, $id)
     {
         $request->validate([
-            'estado_envio' => 'required|in:preparando,en camino,entregado,fallido',
+            // Se agregó 'llego al destino' a la lista de valores permitidos
+            'estado_envio' => 'required|in:preparando,en camino,llego al destino,entregado,fallido',
             'codigo_seguimiento' => 'nullable|string|max:100',
             'responsable_entrega' => 'nullable|string|max:150',
             'fecha_entrega_estimada' => 'nullable|date',
@@ -61,13 +62,22 @@ class PedidoController extends Controller
         // Sincronizamos el estado de la orden padre para que el cliente lo vea actualizado
         $estadoOrden = '';
         switch ($request->estado_envio) {
-            case 'preparando': $estadoOrden = 'Preparando Paquete'; break;
-            case 'en camino': $estadoOrden = 'En Tránsito a Destino'; break;
+            case 'preparando': 
+                $estadoOrden = 'Preparando Paquete'; 
+                break;
+            case 'en camino': 
+                $estadoOrden = 'En Tránsito a Destino'; 
+                break;
+            case 'llego al destino': 
+                $estadoOrden = 'Llegó al Destino / Agencia'; 
+                break;
             case 'entregado': 
                 $estadoOrden = 'Completada / Entregada'; 
                 $envio->update(['fecha_entrega_real' => now()]);
                 break;
-            case 'fallido': $estadoOrden = 'Problema Logístico'; break;
+            case 'fallido': 
+                $estadoOrden = 'Problema Logístico'; 
+                break;
         }
 
         $envio->orden->update(['estado_orden' => $estadoOrden]);

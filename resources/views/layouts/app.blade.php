@@ -31,11 +31,13 @@
                         
                         @if(auth()->user()->rol->nombre === 'admin')
                             <span class="text-xs font-bold text-red-600 uppercase tracking-wider bg-red-50 px-2 py-1 rounded">Panel Admin:</span>
+                            <a href="{{ route('cajero.pos.index') }}" class="text-gray-700 hover:text-green-600 font-medium text-sm">Punto de Venta</a>
                             <a href="{{ route('proveedores.index') }}" class="text-gray-700 hover:text-red-600 font-medium text-sm">Proveedores</a>
                             <a href="{{ route('productos.index') }}" class="text-gray-700 hover:text-red-600 font-medium text-sm">Productos</a>
                             <a href="{{ route('admin.pagos.index') }}" class="text-gray-700 hover:text-red-600 font-medium text-sm">Validar Pagos QR</a>
                             <a href="{{ route('personal.envios.index') }}" class="text-gray-700 hover:text-purple-600 font-medium text-sm">Control Envíos</a>
-                            <a href="#" class="text-gray-700 hover:text-red-600 font-medium text-sm">Usuarios</a>
+                            <a href="{{ route('cajero.ventas.index') }}" class="text-gray-700 hover:text-green-600 font-medium text-sm">Ventas Confirmadas</a>
+                            <a href="{{ route('admin.usuarios.index') }}" class="text-gray-700 hover:text-red-600 font-medium text-sm">Usuarios</a>
 
                         @elseif(auth()->user()->rol->nombre === 'personal')
                             <span class="text-xs font-bold text-purple-600 uppercase tracking-wider bg-purple-50 px-2 py-1 rounded">Logística:</span>
@@ -44,12 +46,12 @@
 
                         @elseif(auth()->user()->rol->nombre === 'cajero')
                             <span class="text-xs font-bold text-green-600 uppercase tracking-wider bg-green-50 px-2 py-1 rounded">Caja:</span>
+                            <a href="{{ route('cajero.pos.index') }}" class="text-gray-700 hover:text-green-600 font-medium text-sm">Punto de Venta</a>
                             <a href="{{ route('admin.pagos.index') }}" class="text-gray-700 hover:text-green-600 font-medium text-sm">Validar Pagos QR</a>
-                            <a href="#" class="text-gray-700 hover:text-green-600 font-medium text-sm">Ventas Confirmadas</a>
-
+                            <a href="{{ route('cajero.ventas.index') }}" class="text-gray-700 hover:text-green-600 font-medium text-sm">Ventas Confirmadas</a>
                         @elseif(auth()->user()->rol->nombre === 'cliente')
                             <a href="{{ route('cliente.pedidos') }}" class="text-gray-700 hover:text-blue-600 font-medium text-sm">Mis Pedidos</a>
-                            <a href="#" class="text-gray-700 hover:text-blue-600 font-medium text-sm">Mis Reseñas</a>
+                            <a href="{{ route('cliente.resenas') }}" class="text-gray-700 hover:text-blue-600 font-medium text-sm">Mis Reseñas</a>
                         @endif
                     @endif
                 @else

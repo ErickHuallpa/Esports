@@ -9,7 +9,8 @@ class HomeController extends Controller
 {
     public function index()
     {
-        $productos = Producto::with(['categoria', 'variantes'])
+        // Traemos las reseñas (ratings) para calcular el promedio de estrellas en el Home
+        $productos = Producto::with(['categoria', 'variantes', 'resenas'])
                             ->where('visible', true)
                             ->orderBy('id', 'desc')
                             ->get();
@@ -19,8 +20,8 @@ class HomeController extends Controller
 
     public function show($id)
     {
-        // Traemos el producto junto con todas sus variantes de stock registradas
-        $producto = Producto::with(['categoria', 'variantes'])->findOrFail($id);
+        // Traemos el producto con sus reseñas y la info del usuario que escribió cada reseña
+        $producto = Producto::with(['categoria', 'variantes', 'resenas.user.persona'])->findOrFail($id);
 
         return view('producto.show', compact('producto'));
     }

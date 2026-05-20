@@ -148,7 +148,9 @@ class CompraController extends Controller
         }
     }
 
-    // (Aquí va el resto del código del controlador que ya tenías: listaPagosPendientes y verificarPago)
+    // =============================================================
+    // MÓDULO DE CAJA (ADMIN/CAJERO): GESTIÓN DE TRANSFERENCIAS
+    // =============================================================
     public function listaPagosPendientes()
     {
         $pagos = Pago::with(['user.persona', 'tipoPago', 'venta'])->where('estado', 'pendiente')->orderBy('id', 'asc')->get();
@@ -164,6 +166,14 @@ class CompraController extends Controller
         ]);
 
         $pago = Pago::with('venta.detalles.variante')->findOrFail($id);
+
+        // =======================================================
+        // BLINDAJE DE SEGURIDAD ANTIFRAUDE INTERNO
+        // =======================================================
+        // Bloquea si el cajero/admin intenta evaluar su propio comprobante
+        if ($pago->user_id === auth()->id()) {
+            return back()->with('error', 'Alerta de Seguridad: No tienes autorización para evaluar ni aprobar tus propias transacciones o comprobantes.');
+        }
 
         DB::beginTransaction();
         try {
