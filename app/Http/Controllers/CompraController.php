@@ -32,15 +32,20 @@ class CompraController extends Controller
         $request->validate([
             'tipo_pago_id' => 'required|exists:tipo_pagos,id',
             'metodo_entrega' => 'required|in:tienda,delivery,envio',
-            'ciudad_destino' => 'required_if:metodo_entrega,delivery,envio|nullable|string|max:100',
-            'direccion_envio' => 'required_if:metodo_entrega,delivery,envio|nullable|string',
-            'zona_destino' => 'nullable|string|max:100',
-            // Hacemos el comprobante genéricamente aceptable como imagen
+            
+            // Validaciones para Delivery Local
+            'direccion_delivery' => 'required_if:metodo_entrega,delivery|nullable|string',
+            'zona_destino' => 'required_if:metodo_entrega,delivery|nullable|string|max:100',
+            
+            // Validaciones para Encomienda Nacional
+            'ciudad_encomienda' => 'required_if:metodo_entrega,envio|nullable|string|max:100',
+            'pago_envio' => 'required_if:metodo_entrega,envio|in:destino,pagado',
+
             'comprobante' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:3072'
         ], [
             'tipo_pago_id.required' => 'Debes seleccionar una forma de pago.',
-            'ciudad_destino.required_if' => 'La ciudad es obligatoria si eliges envío o delivery.',
-            'direccion_envio.required_if' => 'La dirección es obligatoria si eliges envío o delivery.',
+            'direccion_delivery.required_if' => 'La dirección es obligatoria para el delivery.',
+            'ciudad_encomienda.required_if' => 'La ciudad es obligatoria para enviar la encomienda.',
         ]);
 
         $cartItems = session()->get('carrito', []);
@@ -50,22 +55,52 @@ class CompraController extends Controller
 
         $tipoPago = TipoPago::findOrFail($request->tipo_pago_id);
 
-        // VALIDACIÓN MANUAL SEGURA DEL QR
         if ($tipoPago->nombre === 'QR' && !$request->hasFile('comprobante')) {
             return back()->withErrors(['comprobante' => 'Debes adjuntar la imagen del comprobante de transferencia bancaria QR.'])->withInput();
         }
 
         DB::beginTransaction();
         try {
-            $totalPrice = 0;
+            // 1. CÁLCULO DE SUBTOTAL (Artículos)
+            $subtotalArticulos = 0;
             foreach ($cartItems as $item) {
-                $totalPrice += $item['precio'] * $item['cantidad'];
+                $subtotalArticulos += $item['precio'] * $item['cantidad'];
             }
 
+            // 2. CÁLCULO LOGÍSTICO ESTRICTO EN BACKEND
+            $costoEnvio = 0.00;
+            $ciudadFinal = 'Potosí';
+            $direccionFinal = 'Recojo en tienda física E-SPORTS';
+            $zonaFinal = null;
+            $notaEnvio = '';
+
+            if ($request->metodo_entrega === 'delivery') {
+                $costoEnvio = 5.00; // Tarifa plana por defecto
+                $ciudadFinal = 'Potosí (Área Urbana)';
+                $direccionFinal = $request->direccion_delivery;
+                $zonaFinal = $request->zona_destino;
+            } elseif ($request->metodo_entrega === 'envio') {
+                $ciudadFinal = $request->ciudad_encomienda;
+                $direccionFinal = 'Recojo en Terminal / Agencia destino';
+                
+                if ($request->pago_envio === 'pagado') {
+                    $costoEnvio = 25.00; // Tarifa plana estimada pagada por adelantado
+                    $notaEnvio = ' (El cliente ya pagó 25 Bs por el envío en su transferencia)';
+                } else {
+                    $costoEnvio = 0.00; // Paga al recoger
+                    $notaEnvio = ' (Cobro del envío en Destino por parte de la empresa de transporte)';
+                }
+                $direccionFinal .= $notaEnvio;
+            }
+
+            // TOTAL FINAL REAL (Artículos + Envío)
+            $totalVenta = $subtotalArticulos + $costoEnvio;
+
+            // 3. REGISTROS EN BASE DE DATOS
             $pagoData = [
                 'tipo_pago_id' => $tipoPago->id,
                 'user_id' => auth()->id(),
-                'monto' => $totalPrice,
+                'monto' => $totalVenta, // Guardamos el total real con envío
                 'estado' => ($tipoPago->nombre === 'QR') ? 'pendiente' : 'verificado',
                 'fecha_pago' => now(),
             ];
@@ -79,7 +114,7 @@ class CompraController extends Controller
             $venta = Venta::create([
                 'user_id' => auth()->id(),
                 'pago_id' => $pago->id,
-                'precio_total' => $totalPrice,
+                'precio_total' => $totalVenta,
                 'descuento_aplicado' => 0.00,
                 'estado_venta' => ($tipoPago->nombre === 'QR') ? 'pendiente' : 'confirmada',
                 'fecha_venta' => now(),
@@ -89,7 +124,7 @@ class CompraController extends Controller
                 $variante = ProductoVariante::with('producto')->findOrFail($varianteId);
 
                 if ($variante->stock < $item['cantidad']) {
-                    throw new \Exception("Stock insuficiente para el artículo: " . $variante->producto->nombre);
+                    throw new \Exception("Stock insuficiente para: " . $variante->producto->nombre);
                 }
 
                 $stockAnterior = $variante->stock;
@@ -112,7 +147,7 @@ class CompraController extends Controller
                     'cantidad' => $item['cantidad'],
                     'stock_anterior' => $stockAnterior,
                     'stock_resultante' => $variante->stock,
-                    'motivo' => 'Reserva automática por orden de compra online Nro: ' . $venta->id,
+                    'motivo' => 'Reserva automática por orden online Nro: ' . $venta->id,
                 ]);
             }
 
@@ -120,23 +155,22 @@ class CompraController extends Controller
                 'venta_id' => $venta->id,
                 'user_id' => auth()->id(),
                 'estado_orden' => ($tipoPago->nombre === 'QR') ? 'Validando Pago' : 'Preparando',
-                'ciudad_destino' => $request->ciudad_destino ?? 'Potosí (Local)',
-                'direccion_envio' => $request->direccion_envio ?? 'Recojo en tienda física',
+                'ciudad_destino' => $ciudadFinal,
+                'direccion_envio' => $direccionFinal,
             ]);
 
             if ($request->metodo_entrega !== 'tienda') {
                 Envio::create([
                     'orden_id' => $orden->id,
-                    'direccion_destino' => $request->direccion_envio,
-                    'ciudad_destino' => $request->ciudad_destino,
-                    'zona_destino' => $request->zona_destino,
+                    'direccion_destino' => $direccionFinal,
+                    'ciudad_destino' => $ciudadFinal,
+                    'zona_destino' => $zonaFinal,
                     'estado_envio' => 'preparando',
-                    'costo_envio' => ($request->metodo_entrega === 'envio') ? 35.00 : 15.00,
+                    'costo_envio' => $costoEnvio, 
                 ]);
             }
 
             DB::commit();
-
             session()->forget('carrito');
             Cache::forget('carrito_user_' . auth()->id());
 
@@ -167,10 +201,6 @@ class CompraController extends Controller
 
         $pago = Pago::with('venta.detalles.variante')->findOrFail($id);
 
-        // =======================================================
-        // BLINDAJE DE SEGURIDAD ANTIFRAUDE INTERNO
-        // =======================================================
-        // Bloquea si el cajero/admin intenta evaluar su propio comprobante
         if ($pago->user_id === auth()->id()) {
             return back()->with('error', 'Alerta de Seguridad: No tienes autorización para evaluar ni aprobar tus propias transacciones o comprobantes.');
         }

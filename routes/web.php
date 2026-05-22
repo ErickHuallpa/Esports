@@ -13,7 +13,8 @@ use App\Http\Controllers\PedidoController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\ResenaController;
 use App\Http\Controllers\VentaController;
-use App\Http\Controllers\PosController; // <--- Nuevo Controlador
+use App\Http\Controllers\PosController;
+use App\Http\Controllers\InventarioController;
 
 // Catálogo Público Principal y Detalle de Producto
 Route::get('/', [HomeController::class, 'index'])->name('home');
@@ -68,6 +69,9 @@ Route::middleware(['auth'])->group(function () {
     Route::put('/producto/resena/{id}', [ResenaController::class, 'update'])->name('resenas.update');
     Route::delete('/producto/resena/{id}', [ResenaController::class, 'destroy'])->name('resenas.destroy');
     Route::get('/mis-resenas', [ResenaController::class, 'misResenas'])->name('cliente.resenas');
+
+    Route::get('/inventario', [InventarioController::class, 'index'])->name('personal.inventario.index');
+    Route::post('/inventario', [InventarioController::class, 'store'])->name('personal.inventario.store');
 
     // MÓDULO CAJERO: Punto de Venta (POS)
     Route::get('/gestion/ventas', [VentaController::class, 'index'])->name('cajero.ventas.index');

@@ -17,25 +17,45 @@
                     
                     <div>
                         <label class="block text-xs font-bold text-gray-700 uppercase mb-2">Selecciona la modalidad *</label>
-                        <select id="metodo_entrega" name="metodo_entrega" onchange="alternarLogistica()" required class="w-full rounded-lg border-gray-300 border p-2.5 text-sm bg-white">
-                            <option value="tienda" {{ old('metodo_entrega') == 'tienda' ? 'selected' : '' }}>Recoger en Tienda Física (Gratis)</option>
-                            <option value="delivery" {{ old('metodo_entrega') == 'delivery' ? 'selected' : '' }}>Servicio de Delivery Local (Potosí)</option>
-                            <option value="envio" {{ old('metodo_entrega') == 'envio' ? 'selected' : '' }}>Envio a otros Municipios (Betanzos, Tupiza, etc.)</option>
+                        <select id="metodo_entrega" name="metodo_entrega" onchange="alternarLogistica()" required class="w-full rounded-lg border-gray-300 border p-2.5 text-sm bg-white focus:ring-blue-500">
+                            <option value="tienda" {{ old('metodo_entrega') == 'tienda' ? 'selected' : '' }}>Recoger en Tienda Física (Potosí - Gratis)</option>
+                            <option value="delivery" {{ old('metodo_entrega') == 'delivery' ? 'selected' : '' }}>Servicio de Delivery a Domicilio (Potosí - Bs 5.00)</option>
+                            <option value="envio" {{ old('metodo_entrega') == 'envio' ? 'selected' : '' }}>Envío por Encomienda (Resto de Bolivia)</option>
                         </select>
                     </div>
 
-                    <div id="campos_envio" class="hidden grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
-                        <div>
-                            <label class="block text-xs font-bold text-gray-700 uppercase">Ciudad / Municipio de Destino *</label>
-                            <input type="text" name="ciudad_destino" id="ciudad_destino" value="{{ old('ciudad_destino') }}" placeholder="Ej: Tupiza" class="mt-1 block w-full rounded-lg border-gray-300 border p-2 text-sm">
+                    <div id="campos_delivery" class="hidden grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+                        <div class="md:col-span-2">
+                            <div class="bg-blue-50 p-3 rounded-lg border border-blue-100 mb-2">
+                                <p class="text-xs text-blue-800 font-medium">Se añadirá un recargo fijo de Bs 5.00 al total de tu compra por el servicio de entrega en Potosí.</p>
+                            </div>
+                            <input type="hidden" name="ciudad_delivery" value="Potosí">
                         </div>
                         <div>
-                            <label class="block text-xs font-bold text-gray-700 uppercase">Zona / Barrio</label>
-                            <input type="text" name="zona_destino" value="{{ old('zona_destino') }}" placeholder="Ej: San Gerardo" class="mt-1 block w-full rounded-lg border-gray-300 border p-2 text-sm">
+                            <label class="block text-xs font-bold text-gray-700 uppercase">Zona / Barrio *</label>
+                            <input type="text" name="zona_destino" id="zona_destino" value="{{ old('zona_destino') }}" placeholder="Ej: San Clemente" class="mt-1 block w-full rounded-lg border-gray-300 border p-2 text-sm focus:ring-blue-500">
                         </div>
                         <div class="md:col-span-2">
-                            <label class="block text-xs font-bold text-gray-700 uppercase">Dirección de Entrega Exacta *</label>
-                            <textarea name="direccion_envio" id="direccion_envio" rows="2" placeholder="Ej: Calle Chayanta Nro 45..." class="mt-1 block w-full rounded-lg border-gray-300 border p-2 text-sm">{{ old('direccion_envio') }}</textarea>
+                            <label class="block text-xs font-bold text-gray-700 uppercase">Dirección Exacta de tu Casa *</label>
+                            <textarea name="direccion_delivery" id="direccion_delivery" rows="2" placeholder="Ej: Calle Chayanta Nro 45, puerta azul..." class="mt-1 block w-full rounded-lg border-gray-300 border p-2 text-sm focus:ring-blue-500">{{ old('direccion_delivery') }}</textarea>
+                        </div>
+                    </div>
+
+                    <div id="campos_encomienda" class="hidden grid-cols-1 gap-4 pt-2">
+                        <div class="bg-amber-50 p-4 rounded-lg border border-amber-200">
+                            <p class="text-sm font-bold text-amber-900 mb-1">📦 Modalidad Encomienda</p>
+                            <p class="text-xs text-amber-800 mb-3">El paquete será despachado a través de empresas de transporte. Deberás recogerlo personalmente en la Terminal de Buses o Agencia correspondiente a tu ciudad.</p>
+                            
+                            <label class="block text-xs font-bold text-amber-900 uppercase mb-2">¿Cómo deseas pagar el transporte? *</label>
+                            <select id="pago_envio" name="pago_envio" onchange="alternarLogistica()" class="w-full rounded border-amber-300 bg-white p-2 text-sm focus:ring-amber-500">
+                                <option value="destino">Pago en Destino (Pagarás a la empresa al recoger tu caja)</option>
+                                <option value="pagado">Pagar ahora (Añadir Bs 25.00 estimados a tu transferencia QR)</option>
+                            </select>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-xs font-bold text-gray-700 uppercase">Ciudad / Municipio de Destino *</label>
+                            <input type="text" name="ciudad_encomienda" id="ciudad_encomienda" value="{{ old('ciudad_encomienda') }}" placeholder="Ej: Betanzos, Tupiza, Oruro..." class="mt-1 block w-full rounded-lg border-gray-300 border p-2 text-sm focus:ring-blue-500">
                         </div>
                     </div>
                 </div>
@@ -56,7 +76,7 @@
                     </div>
 
                     <div id="pasarela_qr" class="hidden bg-blue-50/50 rounded-xl p-5 border border-blue-100 text-center space-y-4">
-                        <p class="text-sm font-semibold text-blue-900">Escanea el código QR oficial para procesar tu transferencia:</p>
+                        <p class="text-sm font-semibold text-blue-900">Escanea el código QR oficial por el monto exacto (Total a Pagar):</p>
                         <div class="w-48 h-48 mx-auto bg-white p-2 rounded-lg border shadow-sm flex items-center justify-center">
                             <img src="{{ asset('qr/qr.jpg') }}" alt="QR Interbancario" class="max-w-full max-h-full">
                         </div>
@@ -85,14 +105,24 @@
                     </div>
 
                     @php
-                        $subtotal = 0;
-                        foreach($cartItems as $i) $subtotal += $i['precio'] * $i['cantidad'];
+                        $subtotalArticulos = 0;
+                        foreach($cartItems as $i) $subtotalArticulos += $i['precio'] * $i['cantidad'];
                     @endphp
 
-                    <div class="border-t pt-4 space-y-2 text-sm">
-                        <div class="flex justify-between font-black text-lg text-gray-900 border-t pt-2">
+                    <div class="border-t pt-4 space-y-3 text-sm">
+                        <div class="flex justify-between text-gray-600">
+                            <span>Subtotal Artículos:</span>
+                            <span class="font-semibold">Bs {{ number_format($subtotalArticulos, 2) }}</span>
+                        </div>
+                        
+                        <div class="flex justify-between text-gray-600">
+                            <span>Costo de Envío / Delivery:</span>
+                            <span class="font-semibold text-blue-600" id="costo_envio_display">Bs 0.00</span>
+                        </div>
+
+                        <div class="flex justify-between font-black text-lg text-gray-900 border-t pt-3">
                             <span>Total a pagar:</span>
-                            <span>Bs {{ number_format($subtotal, 2) }}</span>
+                            <span class="text-green-600" id="total_final_display">Bs {{ number_format($subtotalArticulos, 2) }}</span>
                         </div>
                     </div>
 
@@ -106,30 +136,84 @@
 </div>
 
 <script>
+    const subtotalBase = {{ $subtotalArticulos }};
+
     function alternarLogistica() {
         const metodo = document.getElementById('metodo_entrega').value;
-        const panel = document.getElementById('campos_envio');
+        const panelDelivery = document.getElementById('campos_delivery');
+        const panelEncomienda = document.getElementById('campos_encomienda');
+        const pagoEnvioEncomienda = document.getElementById('pago_envio').value;
         
+        // Control Campos Delivery
+        const zonaDelivery = document.getElementById('zona_destino');
+        const direccionDelivery = document.getElementById('direccion_delivery');
+        
+        // Control Campos Encomienda
+        const ciudadEncomienda = document.getElementById('ciudad_encomienda');
+
+        let tarifaAgregada = 0;
+
         if(metodo === 'tienda') {
-            panel.classList.add('hidden');
-        } else {
-            panel.classList.remove('hidden');
+            panelDelivery.classList.add('hidden');
+            panelDelivery.classList.remove('grid');
+            panelEncomienda.classList.add('hidden');
+            panelEncomienda.classList.remove('grid');
+            
+            zonaDelivery.required = false;
+            direccionDelivery.required = false;
+            ciudadEncomienda.required = false;
+            tarifaAgregada = 0;
+
+        } else if(metodo === 'delivery') {
+            panelDelivery.classList.remove('hidden');
+            panelDelivery.classList.add('grid');
+            panelEncomienda.classList.add('hidden');
+            panelEncomienda.classList.remove('grid');
+
+            zonaDelivery.required = true;
+            direccionDelivery.required = true;
+            ciudadEncomienda.required = false;
+            tarifaAgregada = 5; // Tarifa plana Delivery Urbano
+
+        } else if(metodo === 'envio') {
+            panelDelivery.classList.add('hidden');
+            panelDelivery.classList.remove('grid');
+            panelEncomienda.classList.remove('hidden');
+            panelEncomienda.classList.add('grid');
+
+            zonaDelivery.required = false;
+            direccionDelivery.required = false;
+            ciudadEncomienda.required = true;
+            
+            // Evaluamos si el cliente quiere añadir el costo a su transferencia actual
+            if(pagoEnvioEncomienda === 'pagado') {
+                tarifaAgregada = 25; // Tarifa plana encomienda
+            } else {
+                tarifaAgregada = 0; // Paga al recoger (Cobro en destino)
+            }
         }
+
+        // Actualización Visual Dinámica
+        document.getElementById('costo_envio_display').innerText = `Bs ${tarifaAgregada.toFixed(2)}`;
+        const totalFinal = subtotalBase + tarifaAgregada;
+        document.getElementById('total_final_display').innerText = `Bs ${totalFinal.toFixed(2)}`;
     }
 
     function alternarPasarela(nombreMetodo) {
         const pasarela = document.getElementById('pasarela_qr');
+        const comprobante = document.getElementById('comprobante');
+
         if(nombreMetodo === 'QR') {
             pasarela.classList.remove('hidden');
+            comprobante.required = true;
         } else {
             pasarela.classList.add('hidden');
+            comprobante.required = false;
         }
     }
 
-    // Se dispara cuando la página recarga para recordar el estado de los componentes
     document.addEventListener("DOMContentLoaded", function() {
         alternarLogistica();
-        
         const checkedRadio = document.querySelector('input[name="tipo_pago_id"]:checked');
         if(checkedRadio) {
             alternarPasarela(checkedRadio.dataset.nombre);

@@ -34,6 +34,7 @@
                             <a href="{{ route('cajero.pos.index') }}" class="text-gray-700 hover:text-green-600 font-medium text-sm">Punto de Venta</a>
                             <a href="{{ route('proveedores.index') }}" class="text-gray-700 hover:text-red-600 font-medium text-sm">Proveedores</a>
                             <a href="{{ route('productos.index') }}" class="text-gray-700 hover:text-red-600 font-medium text-sm">Productos</a>
+                            <a href="{{ route('personal.inventario.index') }}" class="text-gray-700 hover:text-purple-600 font-medium text-sm">Inventario</a>
                             <a href="{{ route('admin.pagos.index') }}" class="text-gray-700 hover:text-red-600 font-medium text-sm">Validar Pagos QR</a>
                             <a href="{{ route('personal.envios.index') }}" class="text-gray-700 hover:text-purple-600 font-medium text-sm">Control Envíos</a>
                             <a href="{{ route('cajero.ventas.index') }}" class="text-gray-700 hover:text-green-600 font-medium text-sm">Ventas Confirmadas</a>
@@ -42,6 +43,7 @@
                         @elseif(auth()->user()->rol->nombre === 'personal')
                             <span class="text-xs font-bold text-purple-600 uppercase tracking-wider bg-purple-50 px-2 py-1 rounded">Logística:</span>
                             <a href="#" class="text-gray-700 hover:text-purple-600 font-medium text-sm">Inventario</a>
+                            <a href="{{ route('personal.inventario.index') }}" class="text-gray-700 hover:text-purple-600 font-medium text-sm">Inventario</a>
                             <a href="{{ route('personal.envios.index') }}" class="text-gray-700 hover:text-purple-600 font-medium text-sm">Control Envíos</a>
 
                         @elseif(auth()->user()->rol->nombre === 'cajero')
