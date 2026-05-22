@@ -34,6 +34,7 @@
                             <a href="{{ route('cajero.pos.index') }}" class="text-gray-700 hover:text-green-600 font-medium text-sm">Punto de Venta</a>
                             <a href="{{ route('proveedores.index') }}" class="text-gray-700 hover:text-red-600 font-medium text-sm">Proveedores</a>
                             <a href="{{ route('productos.index') }}" class="text-gray-700 hover:text-red-600 font-medium text-sm">Productos</a>
+                            <a href="{{ route('admin.categorias.index') }}" class="text-gray-700 hover:text-red-600 font-medium text-sm">Categorías</a>
                             <a href="{{ route('personal.inventario.index') }}" class="text-gray-700 hover:text-purple-600 font-medium text-sm">Inventario</a>
                             <a href="{{ route('admin.pagos.index') }}" class="text-gray-700 hover:text-red-600 font-medium text-sm">Validar Pagos QR</a>
                             <a href="{{ route('personal.envios.index') }}" class="text-gray-700 hover:text-purple-600 font-medium text-sm">Control Envíos</a>

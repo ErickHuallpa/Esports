@@ -15,6 +15,7 @@ use App\Http\Controllers\ResenaController;
 use App\Http\Controllers\VentaController;
 use App\Http\Controllers\PosController;
 use App\Http\Controllers\InventarioController;
+use App\Http\Controllers\CategoriaController; // <--- NUEVO CONTROLADOR
 
 // Catálogo Público Principal y Detalle de Producto
 Route::get('/', [HomeController::class, 'index'])->name('home');
@@ -52,6 +53,12 @@ Route::middleware(['auth'])->group(function () {
     Route::delete('/productos/{id}', [ProductoController::class, 'destroy'])->name('productos.destroy');
     Route::post('/categorias/rapida', [ProductoController::class, 'storeCategoria'])->name('categorias.store.rapida');
 
+    // MÓDULO DE GESTIÓN DE CATEGORÍAS (PANEL INDEPENDIENTE)
+    Route::get('/categorias', [CategoriaController::class, 'index'])->name('admin.categorias.index');
+    Route::post('/categorias', [CategoriaController::class, 'store'])->name('admin.categorias.store');
+    Route::put('/categorias/{id}', [CategoriaController::class, 'update'])->name('admin.categorias.update');
+    Route::patch('/categorias/{id}/estado', [CategoriaController::class, 'toggleStatus'])->name('admin.categorias.estado');
+
     Route::post('/carrito/agregar', [CarritoController::class, 'agregar'])->name('carrito.agregar');
     Route::post('/carrito/eliminar', [CarritoController::class, 'eliminar'])->name('carrito.eliminar');
 
@@ -77,5 +84,5 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/gestion/ventas', [VentaController::class, 'index'])->name('cajero.ventas.index');
     Route::get('/pos', [PosController::class, 'index'])->name('cajero.pos.index');
     Route::post('/pos', [PosController::class, 'store'])->name('cajero.pos.store');
-    Route::get('/pos/buscar-cliente', [PosController::class, 'buscarCliente'])->name('cajero.pos.buscarCliente'); // <--- Ruta AJAX
+    Route::get('/pos/buscar-cliente', [PosController::class, 'buscarCliente'])->name('cajero.pos.buscarCliente');
 });
