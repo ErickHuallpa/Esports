@@ -14,7 +14,12 @@ class CarritoController extends Controller
             'producto_variante_id' => 'required|exists:producto_variantes,id',
         ]);
 
-        $variante = ProductoVariante::with('producto')->findOrFail($request->producto_variante_id);
+        // Cargamos producto y sus ofertas válidas
+        $variante = ProductoVariante::with(['producto.ofertas' => function($q) {
+            $q->where('fecha_inicio', '<=', now())
+              ->where('fecha_fin', '>=', now())
+              ->where('activa', true);
+        }])->findOrFail($request->producto_variante_id);
 
         if ($variante->stock <= 0) {
             return back()->with('error', 'La combinación seleccionada ya no cuenta con stock disponible.');
@@ -23,11 +28,22 @@ class CarritoController extends Controller
         $carrito = session()->get('carrito', []);
         $idSession = $variante->id;
 
+        // CÁLCULO DINÁMICO DE OFERTA
+        $ofertaActiva = $variante->producto->ofertas->first();
+        $precioFinal = $variante->producto->precio_venta;
+
+        if ($ofertaActiva) {
+            $descuento = $precioFinal * ($ofertaActiva->porcentaje_descuento / 100);
+            $precioFinal = $precioFinal - $descuento;
+        }
+
         if (isset($carrito[$idSession])) {
             if ($carrito[$idSession]['cantidad'] + 1 > $variante->stock) {
                 return back()->with('error', 'No puedes agregar más unidades de las disponibles en almacén.');
             }
             $carrito[$idSession]['cantidad']++;
+            // Actualizamos precio en caso de que la oferta haya cambiado
+            $carrito[$idSession]['precio'] = $precioFinal;
         } else {
             $fotos = json_decode($variante->producto->imagen_url, true) ?? [];
             $portada = count($fotos) > 0 ? $fotos[0] : null;
@@ -35,7 +51,7 @@ class CarritoController extends Controller
             $carrito[$idSession] = [
                 'producto_id' => $variante->producto_id,
                 'nombre' => $variante->producto->nombre,
-                'precio' => $variante->producto->precio_venta,
+                'precio' => $precioFinal, // <--- GUARDAMOS EL PRECIO REBAJADO
                 'imagen_url' => $portada,
                 'talla' => $variante->talla,
                 'color' => $variante->color,
@@ -43,10 +59,7 @@ class CarritoController extends Controller
             ];
         }
 
-        // Guardamos en la sesión actual
         session()->put('carrito', $carrito);
-
-        // RESPALDO EN CACHÉ: Vinculamos el carrito al ID del usuario por 30 días
         Cache::put('carrito_user_' . auth()->id(), $carrito, now()->addDays(30));
 
         return back()->with('success', 'Producto añadido al carrito.')->with('open_cart', true);
@@ -60,7 +73,6 @@ class CarritoController extends Controller
             unset($carrito[$request->id]);
             session()->put('carrito', $carrito);
             
-            // Actualizamos o limpiamos el respaldo en caché
             if (count($carrito) > 0) {
                 Cache::put('carrito_user_' . auth()->id(), $carrito, now()->addDays(30));
             } else {

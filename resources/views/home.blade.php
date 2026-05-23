@@ -16,10 +16,27 @@
             // Cálculo del promedio de estrellas
             $promedioRating = $prod->resenas->avg('calificacion') ?? 0;
             $totalResenas = $prod->resenas->count();
+
+            // Cálculo Dinámico de Ofertas
+            $ofertaActiva = $prod->ofertas->first();
+            $precioMostrar = $prod->precio_venta;
+            $precioOriginal = null;
+
+            if ($ofertaActiva) {
+                $precioOriginal = $prod->precio_venta;
+                $descuentoMonto = $precioOriginal * ($ofertaActiva->porcentaje_descuento / 100);
+                $precioMostrar = $precioOriginal - $descuentoMonto;
+            }
         @endphp
         
-        <div class="group bg-white rounded-2xl shadow-sm border border-gray-100 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 overflow-hidden flex flex-col">
+        <div class="group bg-white rounded-2xl shadow-sm border border-gray-100 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 overflow-hidden flex flex-col relative">
             
+            @if($ofertaActiva)
+                <div class="absolute top-0 right-0 bg-red-600 text-white text-xs font-black px-3 py-1.5 rounded-bl-xl shadow-md z-10">
+                    -{{ $ofertaActiva->porcentaje_descuento }}% OFF
+                </div>
+            @endif
+
             <div class="relative h-56 bg-gray-50 flex items-center justify-center overflow-hidden">
                 @if($portada)
                     <img src="{{ asset('storage/' . $portada) }}" alt="{{ $prod->nombre }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
@@ -40,7 +57,7 @@
                 </div>
 
                 @if($prod->modelo_3d_url)
-                    <div class="absolute top-3 right-3 bg-blue-600 text-white text-xs font-bold px-2.5 py-1 rounded-lg shadow-md flex items-center">
+                    <div class="absolute bottom-3 right-3 bg-blue-600 text-white text-xs font-bold px-2.5 py-1 rounded-lg shadow-md flex items-center">
                         <svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"></path>
                         </svg>
@@ -75,7 +92,12 @@
                 
                 <div class="mt-4 flex items-center justify-between">
                     <div class="flex flex-col">
-                        <span class="text-2xl font-black text-gray-900">Bs {{ number_format($prod->precio_venta, 2) }}</span>
+                        @if($precioOriginal)
+                            <span class="text-xs font-bold text-gray-400 line-through">Bs {{ number_format($precioOriginal, 2) }}</span>
+                            <span class="text-2xl font-black text-red-600 leading-none">Bs {{ number_format($precioMostrar, 2) }}</span>
+                        @else
+                            <span class="text-2xl font-black text-gray-900 leading-none mt-4">Bs {{ number_format($precioMostrar, 2) }}</span>
+                        @endif
                     </div>
                     <a href="{{ route('producto.show', $prod->id) }}" class="bg-gray-900 text-white text-xs px-4 py-2.5 rounded-xl font-bold hover:bg-blue-600 text-center transition-colors shadow">
                         Ver Producto

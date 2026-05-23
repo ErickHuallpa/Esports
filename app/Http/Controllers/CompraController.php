@@ -11,6 +11,7 @@ use App\Models\Orden;
 use App\Models\Envio;
 use App\Models\Inventario;
 use App\Models\TipoPago;
+use App\Models\Cupon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Cache;
 
@@ -32,15 +33,12 @@ class CompraController extends Controller
         $request->validate([
             'tipo_pago_id' => 'required|exists:tipo_pagos,id',
             'metodo_entrega' => 'required|in:tienda,delivery,envio',
-            
-            // Validaciones para Delivery Local
             'direccion_delivery' => 'required_if:metodo_entrega,delivery|nullable|string',
             'zona_destino' => 'required_if:metodo_entrega,delivery|nullable|string|max:100',
-            
-            // Validaciones para Encomienda Nacional
             'ciudad_encomienda' => 'required_if:metodo_entrega,envio|nullable|string|max:100',
             'pago_envio' => 'required_if:metodo_entrega,envio|in:destino,pagado',
-
+            'cupon_id' => 'nullable|exists:cupones,id',
+            'descuento_aplicado' => 'nullable|numeric|min:0',
             'comprobante' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:3072'
         ], [
             'tipo_pago_id.required' => 'Debes seleccionar una forma de pago.',
@@ -60,14 +58,45 @@ class CompraController extends Controller
         }
 
         DB::beginTransaction();
+
         try {
-            // 1. CÁLCULO DE SUBTOTAL (Artículos)
             $subtotalArticulos = 0;
             foreach ($cartItems as $item) {
                 $subtotalArticulos += $item['precio'] * $item['cantidad'];
             }
 
-            // 2. CÁLCULO LOGÍSTICO ESTRICTO EN BACKEND
+            $descuentoAplicado = 0;
+            $cupon = null;
+
+            if ($request->filled('cupon_id')) {
+                $cupon = Cupon::lockForUpdate()->findOrFail($request->cupon_id);
+
+                if ($cupon->usado) {
+                    throw new \Exception('Este cupón ya fue utilizado.');
+                }
+
+                $descuentoAplicado = (float) $cupon->valor;
+                if ($descuentoAplicado > $subtotalArticulos) {
+                    $descuentoAplicado = $subtotalArticulos;
+                }
+
+                $cupon->update([
+                    'usado' => true,
+                    'usado_en' => now(),
+                    'usado_por' => auth()->id(),
+                ]);
+            } else {
+                $descuentoAplicado = floatval($request->descuento_aplicado ?? 0);
+                if ($descuentoAplicado < 0) {
+                    $descuentoAplicado = 0;
+                }
+                if ($descuentoAplicado > $subtotalArticulos) {
+                    $descuentoAplicado = $subtotalArticulos;
+                }
+            }
+
+            $subtotalConDescuento = $subtotalArticulos - $descuentoAplicado;
+
             $costoEnvio = 0.00;
             $ciudadFinal = 'Potosí';
             $direccionFinal = 'Recojo en tienda física E-SPORTS';
@@ -75,32 +104,31 @@ class CompraController extends Controller
             $notaEnvio = '';
 
             if ($request->metodo_entrega === 'delivery') {
-                $costoEnvio = 5.00; // Tarifa plana por defecto
+                $costoEnvio = 5.00;
                 $ciudadFinal = 'Potosí (Área Urbana)';
                 $direccionFinal = $request->direccion_delivery;
                 $zonaFinal = $request->zona_destino;
             } elseif ($request->metodo_entrega === 'envio') {
                 $ciudadFinal = $request->ciudad_encomienda;
                 $direccionFinal = 'Recojo en Terminal / Agencia destino';
-                
+
                 if ($request->pago_envio === 'pagado') {
-                    $costoEnvio = 25.00; // Tarifa plana estimada pagada por adelantado
+                    $costoEnvio = 25.00;
                     $notaEnvio = ' (El cliente ya pagó 25 Bs por el envío en su transferencia)';
                 } else {
-                    $costoEnvio = 0.00; // Paga al recoger
+                    $costoEnvio = 0.00;
                     $notaEnvio = ' (Cobro del envío en Destino por parte de la empresa de transporte)';
                 }
+
                 $direccionFinal .= $notaEnvio;
             }
 
-            // TOTAL FINAL REAL (Artículos + Envío)
-            $totalVenta = $subtotalArticulos + $costoEnvio;
+            $totalVenta = $subtotalConDescuento + $costoEnvio;
 
-            // 3. REGISTROS EN BASE DE DATOS
             $pagoData = [
                 'tipo_pago_id' => $tipoPago->id,
                 'user_id' => auth()->id(),
-                'monto' => $totalVenta, // Guardamos el total real con envío
+                'monto' => $totalVenta,
                 'estado' => ($tipoPago->nombre === 'QR') ? 'pendiente' : 'verificado',
                 'fecha_pago' => now(),
             ];
@@ -115,7 +143,7 @@ class CompraController extends Controller
                 'user_id' => auth()->id(),
                 'pago_id' => $pago->id,
                 'precio_total' => $totalVenta,
-                'descuento_aplicado' => 0.00,
+                'descuento_aplicado' => $descuentoAplicado,
                 'estado_venta' => ($tipoPago->nombre === 'QR') ? 'pendiente' : 'confirmada',
                 'fecha_venta' => now(),
             ]);
@@ -166,7 +194,7 @@ class CompraController extends Controller
                     'ciudad_destino' => $ciudadFinal,
                     'zona_destino' => $zonaFinal,
                     'estado_envio' => 'preparando',
-                    'costo_envio' => $costoEnvio, 
+                    'costo_envio' => $costoEnvio,
                 ]);
             }
 
@@ -182,9 +210,6 @@ class CompraController extends Controller
         }
     }
 
-    // =============================================================
-    // MÓDULO DE CAJA (ADMIN/CAJERO): GESTIÓN DE TRANSFERENCIAS
-    // =============================================================
     public function listaPagosPendientes()
     {
         $pagos = Pago::with(['user.persona', 'tipoPago', 'venta'])->where('estado', 'pendiente')->orderBy('id', 'asc')->get();
@@ -217,7 +242,7 @@ class CompraController extends Controller
 
                 $pago->venta->update(['estado_venta' => 'confirmada']);
                 $pago->venta->orden->update(['estado_orden' => 'Preparando']);
-                
+
                 $msg = "El pago fue aprobado y la venta ha sido confirmada.";
             } else {
                 foreach ($pago->venta->detalles as $detalle) {
@@ -245,7 +270,7 @@ class CompraController extends Controller
 
                 $pago->venta->update(['estado_venta' => 'cancelada']);
                 $pago->venta->orden->update(['estado_orden' => 'Rechazada por Pago Inválido']);
-                
+
                 $msg = "El comprobante fue rechazado. El stock ha sido restituido al almacén.";
             }
 

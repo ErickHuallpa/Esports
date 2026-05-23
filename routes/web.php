@@ -15,7 +15,11 @@ use App\Http\Controllers\ResenaController;
 use App\Http\Controllers\VentaController;
 use App\Http\Controllers\PosController;
 use App\Http\Controllers\InventarioController;
-use App\Http\Controllers\CategoriaController; // <--- NUEVO CONTROLADOR
+use App\Http\Controllers\CategoriaController;
+use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\OfertaController;
+use App\Http\Controllers\CuponController;
+
 
 // Catálogo Público Principal y Detalle de Producto
 Route::get('/', [HomeController::class, 'index'])->name('home');
@@ -36,6 +40,11 @@ Route::post('/login', [LoginController::class, 'login'])->name('login.store');
 // Rutas Protegidas
 Route::middleware(['auth'])->group(function () {
     Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
+
+    // MÓDULO MI CUENTA (Perfil)
+    Route::get('/perfil', [ProfileController::class, 'edit'])->name('perfil.edit');
+    Route::put('/perfil', [ProfileController::class, 'update'])->name('perfil.update');
+    Route::put('/perfil/password', [ProfileController::class, 'updatePassword'])->name('perfil.password');
 
     Route::get('/usuarios', [UserController::class, 'index'])->name('admin.usuarios.index');
     Route::post('/usuarios', [UserController::class, 'store'])->name('admin.usuarios.store');
@@ -64,8 +73,11 @@ Route::middleware(['auth'])->group(function () {
 
     Route::get('/checkout', [CompraController::class, 'checkoutForm'])->name('checkout.form');
     Route::post('/checkout/procesar', [CompraController::class, 'procesarCompra'])->name('checkout.store');
-    Route::get('/mis-pedidos', [PedidoController::class, 'misPedidos'])->name('cliente.pedidos');
     
+    // Opciones generales para todos los usuarios (Clientes o Staff)
+    Route::get('/mis-pedidos', [PedidoController::class, 'misPedidos'])->name('cliente.pedidos');
+    Route::get('/mis-resenas', [ResenaController::class, 'misResenas'])->name('cliente.resenas');
+
     Route::get('/gestion/pagos', [CompraController::class, 'listaPagosPendientes'])->name('admin.pagos.index');
     Route::post('/gestion/pagos/{id}/verificar', [CompraController::class, 'verificarPago'])->name('admin.pagos.verificar');
 
@@ -75,7 +87,6 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/producto/resena', [ResenaController::class, 'store'])->name('resenas.store');
     Route::put('/producto/resena/{id}', [ResenaController::class, 'update'])->name('resenas.update');
     Route::delete('/producto/resena/{id}', [ResenaController::class, 'destroy'])->name('resenas.destroy');
-    Route::get('/mis-resenas', [ResenaController::class, 'misResenas'])->name('cliente.resenas');
 
     Route::get('/inventario', [InventarioController::class, 'index'])->name('personal.inventario.index');
     Route::post('/inventario', [InventarioController::class, 'store'])->name('personal.inventario.store');
@@ -85,4 +96,14 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/pos', [PosController::class, 'index'])->name('cajero.pos.index');
     Route::post('/pos', [PosController::class, 'store'])->name('cajero.pos.store');
     Route::get('/pos/buscar-cliente', [PosController::class, 'buscarCliente'])->name('cajero.pos.buscarCliente');
+
+    Route::get('/ofertas', [OfertaController::class, 'index'])->name('admin.ofertas.index');
+    Route::post('/ofertas', [OfertaController::class, 'store'])->name('admin.ofertas.store');
+    Route::delete('/ofertas/{id}', [OfertaController::class, 'destroy'])->name('admin.ofertas.destroy');
+    Route::post('/validar-cupon', [OfertaController::class, 'validarCupon'])->name('cliente.validarCupon');
+
+    Route::get('/cupones', [CuponController::class, 'index'])->name('admin.cupones.index');
+    Route::post('/cupones', [CuponController::class, 'store'])->name('admin.cupones.store');
+    Route::delete('/cupones/{id}', [CuponController::class, 'destroy'])->name('admin.cupones.destroy');
+    Route::post('/validar-cupon', [CuponController::class, 'validarCupon'])->name('cliente.validarCupon');
 });

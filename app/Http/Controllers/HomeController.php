@@ -9,8 +9,13 @@ class HomeController extends Controller
 {
     public function index()
     {
-        // Traemos las reseñas (ratings) para calcular el promedio de estrellas en el Home
-        $productos = Producto::with(['categoria', 'variantes', 'resenas'])
+        // Traemos las reseñas, variantes y las ofertas activas
+        $productos = Producto::with(['categoria', 'variantes', 'resenas', 'ofertas' => function($q) {
+                                // Filtramos para cargar solo las ofertas que están en fecha válida
+                                $q->where('fecha_inicio', '<=', now())
+                                  ->where('fecha_fin', '>=', now())
+                                  ->where('activa', true);
+                            }])
                             ->where('visible', true)
                             ->orderBy('id', 'desc')
                             ->get();
@@ -20,8 +25,11 @@ class HomeController extends Controller
 
     public function show($id)
     {
-        // Traemos el producto con sus reseñas y la info del usuario que escribió cada reseña
-        $producto = Producto::with(['categoria', 'variantes', 'resenas.user.persona'])->findOrFail($id);
+        $producto = Producto::with(['categoria', 'variantes', 'resenas.user.persona', 'ofertas' => function($q) {
+                                $q->where('fecha_inicio', '<=', now())
+                                  ->where('fecha_fin', '>=', now())
+                                  ->where('activa', true);
+                            }])->findOrFail($id);
 
         return view('producto.show', compact('producto'));
     }

@@ -9,12 +9,12 @@
 
     <form action="{{ route('checkout.store') }}" method="POST" enctype="multipart/form-data">
         @csrf
+
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            
             <div class="lg:col-span-2 space-y-6">
                 <div class="bg-white rounded-xl border p-6 shadow-sm space-y-4">
                     <h3 class="text-lg font-bold text-gray-800 border-b pb-2">1. Método de Entrega</h3>
-                    
+
                     <div>
                         <label class="block text-xs font-bold text-gray-700 uppercase mb-2">Selecciona la modalidad *</label>
                         <select id="metodo_entrega" name="metodo_entrega" onchange="alternarLogistica()" required class="w-full rounded-lg border-gray-300 border p-2.5 text-sm bg-white focus:ring-blue-500">
@@ -45,14 +45,14 @@
                         <div class="bg-amber-50 p-4 rounded-lg border border-amber-200">
                             <p class="text-sm font-bold text-amber-900 mb-1">📦 Modalidad Encomienda</p>
                             <p class="text-xs text-amber-800 mb-3">El paquete será despachado a través de empresas de transporte. Deberás recogerlo personalmente en la Terminal de Buses o Agencia correspondiente a tu ciudad.</p>
-                            
+
                             <label class="block text-xs font-bold text-amber-900 uppercase mb-2">¿Cómo deseas pagar el transporte? *</label>
                             <select id="pago_envio" name="pago_envio" onchange="alternarLogistica()" class="w-full rounded border-amber-300 bg-white p-2 text-sm focus:ring-amber-500">
-                                <option value="destino">Pago en Destino (Pagarás a la empresa al recoger tu caja)</option>
-                                <option value="pagado">Pagar ahora (Añadir Bs 25.00 estimados a tu transferencia QR)</option>
+                                <option value="destino" {{ old('pago_envio') == 'destino' ? 'selected' : '' }}>Pago en Destino (Pagarás a la empresa al recoger tu caja)</option>
+                                <option value="pagado" {{ old('pago_envio') == 'pagado' ? 'selected' : '' }}>Pagar ahora (Añadir Bs 25.00 estimados a tu transferencia QR)</option>
                             </select>
                         </div>
-                        
+
                         <div>
                             <label class="block text-xs font-bold text-gray-700 uppercase">Ciudad / Municipio de Destino *</label>
                             <input type="text" name="ciudad_encomienda" id="ciudad_encomienda" value="{{ old('ciudad_encomienda') }}" placeholder="Ej: Betanzos, Tupiza, Oruro..." class="mt-1 block w-full rounded-lg border-gray-300 border p-2 text-sm focus:ring-blue-500">
@@ -62,7 +62,7 @@
 
                 <div class="bg-white rounded-xl border p-6 shadow-sm space-y-4">
                     <h3 class="text-lg font-bold text-gray-800 border-b pb-2">2. Forma de Pago</h3>
-                    
+
                     <div class="grid grid-cols-2 gap-4">
                         @foreach($tipoPagos as $tp)
                             <label class="border rounded-xl p-4 flex items-center space-x-3 cursor-pointer bg-gray-50 hover:bg-gray-100 transition">
@@ -91,8 +91,8 @@
             <div class="space-y-4">
                 <div class="bg-white rounded-xl border p-6 shadow-sm sticky top-6">
                     <h3 class="text-lg font-bold text-gray-800 border-b pb-2 mb-4">Resumen de Orden</h3>
-                    
-                    <div class="divide-y max-h-60 overflow-y-auto mb-4 pr-1">
+
+                    <div class="divide-y max-h-48 overflow-y-auto mb-4 pr-1">
                         @foreach($cartItems as $item)
                             <div class="py-2.5 flex justify-between text-sm">
                                 <div>
@@ -109,24 +109,41 @@
                         foreach($cartItems as $i) $subtotalArticulos += $i['precio'] * $i['cantidad'];
                     @endphp
 
+                    <div class="mb-4">
+                        <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1">¿Tienes un código de descuento?</label>
+                        <div class="flex space-x-2">
+                            <input type="text" id="cupon_input" placeholder="Ej: ESPORTS10" class="w-full uppercase rounded-lg border-gray-300 p-2 text-sm focus:ring-blue-500">
+                            <button type="button" onclick="aplicarCuponAJAX()" class="bg-gray-900 hover:bg-black text-white font-bold px-4 rounded-lg text-xs transition">Aplicar</button>
+                        </div>
+                        <p id="cupon_mensaje" class="text-xs font-bold mt-1 hidden"></p>
+                    </div>
+
                     <div class="border-t pt-4 space-y-3 text-sm">
                         <div class="flex justify-between text-gray-600">
                             <span>Subtotal Artículos:</span>
-                            <span class="font-semibold">Bs {{ number_format($subtotalArticulos, 2) }}</span>
+                            <span class="font-semibold" id="subtotal_base_display">Bs {{ number_format($subtotalArticulos, 2) }}</span>
                         </div>
-                        
+
+                        <div id="fila_descuento" class="flex justify-between text-red-500 font-bold hidden">
+                            <span>Descuento aplicado:</span>
+                            <span id="descuento_display">- Bs 0.00</span>
+                        </div>
+
                         <div class="flex justify-between text-gray-600">
-                            <span>Costo de Envío / Delivery:</span>
+                            <span>Logística / Encomienda:</span>
                             <span class="font-semibold text-blue-600" id="costo_envio_display">Bs 0.00</span>
                         </div>
 
                         <div class="flex justify-between font-black text-lg text-gray-900 border-t pt-3">
-                            <span>Total a pagar:</span>
+                            <span>Total a depositar:</span>
                             <span class="text-green-600" id="total_final_display">Bs {{ number_format($subtotalArticulos, 2) }}</span>
                         </div>
                     </div>
 
-                    <button type="submit" class="w-full mt-6 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl shadow-md transition">
+                    <input type="hidden" id="cupon_id" name="cupon_id" value="">
+                    <input type="hidden" id="descuento_oculto" name="descuento_aplicado" value="0">
+
+                    <button type="submit" class="w-full mt-6 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3.5 rounded-xl shadow-md transition">
                         Confirmar y Enviar Solicitud
                     </button>
                 </div>
@@ -137,65 +154,111 @@
 
 <script>
     const subtotalBase = {{ $subtotalArticulos }};
+    let montoDescuentoActivo = 0;
+
+    async function aplicarCuponAJAX() {
+        const input = document.getElementById('cupon_input').value;
+        const mensaje = document.getElementById('cupon_mensaje');
+        const filaDesc = document.getElementById('fila_descuento');
+        const descDisplay = document.getElementById('descuento_display');
+        const inputOculto = document.getElementById('descuento_oculto');
+        const inputCuponId = document.getElementById('cupon_id');
+
+        if (input.trim() === '') return;
+
+        try {
+            const res = await fetch('{{ route('cliente.validarCupon') }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                },
+                body: JSON.stringify({ codigo: input })
+            });
+
+            const data = await res.json();
+
+            mensaje.classList.remove('hidden', 'text-red-500', 'text-green-600');
+            mensaje.innerText = data.mensaje;
+
+            if (data.valido) {
+                mensaje.classList.add('text-green-600');
+                filaDesc.classList.remove('hidden');
+                document.getElementById('cupon_input').readOnly = true;
+
+                if (data.cupon.tipo === 'porcentaje') {
+                    montoDescuentoActivo = subtotalBase * (data.cupon.valor / 100);
+                } else {
+                    montoDescuentoActivo = data.cupon.valor;
+                }
+
+                if (montoDescuentoActivo > subtotalBase) montoDescuentoActivo = subtotalBase;
+
+                descDisplay.innerText = `- Bs ${montoDescuentoActivo.toFixed(2)}`;
+                inputOculto.value = montoDescuentoActivo;
+                inputCuponId.value = data.cupon.id;
+                alternarLogistica();
+            } else {
+                mensaje.classList.add('text-red-500');
+                filaDesc.classList.add('hidden');
+                montoDescuentoActivo = 0;
+                inputOculto.value = 0;
+                inputCuponId.value = '';
+                document.getElementById('cupon_input').readOnly = false;
+                alternarLogistica();
+            }
+        } catch (error) {
+            console.error("Fallo de red:", error);
+        }
+    }
 
     function alternarLogistica() {
         const metodo = document.getElementById('metodo_entrega').value;
         const panelDelivery = document.getElementById('campos_delivery');
         const panelEncomienda = document.getElementById('campos_encomienda');
-        const pagoEnvioEncomienda = document.getElementById('pago_envio').value;
-        
-        // Control Campos Delivery
+        const pagoEnvioEncomienda = document.getElementById('pago_envio') ? document.getElementById('pago_envio').value : '';
         const zonaDelivery = document.getElementById('zona_destino');
         const direccionDelivery = document.getElementById('direccion_delivery');
-        
-        // Control Campos Encomienda
         const ciudadEncomienda = document.getElementById('ciudad_encomienda');
 
         let tarifaAgregada = 0;
 
-        if(metodo === 'tienda') {
+        if (metodo === 'tienda') {
             panelDelivery.classList.add('hidden');
             panelDelivery.classList.remove('grid');
             panelEncomienda.classList.add('hidden');
             panelEncomienda.classList.remove('grid');
-            
             zonaDelivery.required = false;
             direccionDelivery.required = false;
             ciudadEncomienda.required = false;
             tarifaAgregada = 0;
-
-        } else if(metodo === 'delivery') {
+        } else if (metodo === 'delivery') {
             panelDelivery.classList.remove('hidden');
             panelDelivery.classList.add('grid');
             panelEncomienda.classList.add('hidden');
             panelEncomienda.classList.remove('grid');
-
             zonaDelivery.required = true;
             direccionDelivery.required = true;
             ciudadEncomienda.required = false;
-            tarifaAgregada = 5; // Tarifa plana Delivery Urbano
-
-        } else if(metodo === 'envio') {
+            tarifaAgregada = 5;
+        } else if (metodo === 'envio') {
             panelDelivery.classList.add('hidden');
             panelDelivery.classList.remove('grid');
             panelEncomienda.classList.remove('hidden');
             panelEncomienda.classList.add('grid');
-
             zonaDelivery.required = false;
             direccionDelivery.required = false;
             ciudadEncomienda.required = true;
-            
-            // Evaluamos si el cliente quiere añadir el costo a su transferencia actual
-            if(pagoEnvioEncomienda === 'pagado') {
-                tarifaAgregada = 25; // Tarifa plana encomienda
+
+            if (pagoEnvioEncomienda === 'pagado') {
+                tarifaAgregada = 25;
             } else {
-                tarifaAgregada = 0; // Paga al recoger (Cobro en destino)
+                tarifaAgregada = 0;
             }
         }
 
-        // Actualización Visual Dinámica
         document.getElementById('costo_envio_display').innerText = `Bs ${tarifaAgregada.toFixed(2)}`;
-        const totalFinal = subtotalBase + tarifaAgregada;
+        const totalFinal = subtotalBase - montoDescuentoActivo + tarifaAgregada;
         document.getElementById('total_final_display').innerText = `Bs ${totalFinal.toFixed(2)}`;
     }
 
@@ -203,7 +266,7 @@
         const pasarela = document.getElementById('pasarela_qr');
         const comprobante = document.getElementById('comprobante');
 
-        if(nombreMetodo === 'QR') {
+        if (nombreMetodo === 'QR') {
             pasarela.classList.remove('hidden');
             comprobante.required = true;
         } else {
@@ -215,7 +278,7 @@
     document.addEventListener("DOMContentLoaded", function() {
         alternarLogistica();
         const checkedRadio = document.querySelector('input[name="tipo_pago_id"]:checked');
-        if(checkedRadio) {
+        if (checkedRadio) {
             alternarPasarela(checkedRadio.dataset.nombre);
         }
     });

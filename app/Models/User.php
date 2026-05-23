@@ -17,6 +17,7 @@ class User extends Authenticatable
         'rol_id',
         'email',
         'username',
+        'foto_perfil', // <--- NUEVO CAMPO AÑADIDO
         'password',
         'activo',
         'ultimo_login',
@@ -38,49 +39,13 @@ class User extends Authenticatable
     }
 
     // RELACIONES
-
-    public function persona()
-    {
-        return $this->belongsTo(Persona::class, 'persona_id');
-    }
-
-    public function rol()
-    {
-        return $this->belongsTo(Rol::class, 'rol_id');
-    }
-
-    public function pagos()
-    {
-        return $this->hasMany(Pago::class, 'user_id');
-    }
-
-    public function pagosVerificados()
-    {
-        return $this->hasMany(Pago::class, 'verificado_por');
-    }
-
-    public function ventas()
-    {
-        return $this->hasMany(Venta::class, 'user_id');
-    }
-
-    public function ordenes()
-    {
-        return $this->hasMany(Orden::class, 'user_id');
-    }
-
-    public function enviosAsignados()
-    {
-        return $this->hasMany(Envio::class, 'admin_asignado');
-    }
-
-    public function inventarios()
-    {
-        return $this->hasMany(Inventario::class, 'user_id');
-    }
-
-    public function resenas()
-    {
-        return $this->hasMany(Resena::class, 'user_id');
-    }
+    public function persona() { return $this->belongsTo(Persona::class, 'persona_id'); }
+    public function rol() { return $this->belongsTo(Rol::class, 'rol_id'); }
+    public function pagos() { return $this->hasMany(Pago::class, 'user_id'); }
+    public function pagosVerificados() { return $this->hasMany(Pago::class, 'verificado_por'); }
+    public function ventas() { return $this->hasMany(Venta::class, 'user_id'); }
+    public function ordenes() { return $this->hasMany(Orden::class, 'user_id'); }
+    public function enviosAsignados() { return $this->hasMany(Envio::class, 'admin_asignado'); }
+    public function inventarios() { return $this->hasMany(Inventario::class, 'user_id'); }
+    public function resenas() { return $this->hasMany(Resena::class, 'user_id'); }
 }
