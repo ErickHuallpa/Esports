@@ -19,7 +19,7 @@ use App\Http\Controllers\CategoriaController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\OfertaController;
 use App\Http\Controllers\CuponController;
-
+use App\Http\Controllers\ReporteController;
 
 // Catálogo Público Principal y Detalle de Producto
 Route::get('/', [HomeController::class, 'index'])->name('home');
@@ -73,7 +73,7 @@ Route::middleware(['auth'])->group(function () {
 
     Route::get('/checkout', [CompraController::class, 'checkoutForm'])->name('checkout.form');
     Route::post('/checkout/procesar', [CompraController::class, 'procesarCompra'])->name('checkout.store');
-    
+
     // Opciones generales para todos los usuarios (Clientes o Staff)
     Route::get('/mis-pedidos', [PedidoController::class, 'misPedidos'])->name('cliente.pedidos');
     Route::get('/mis-resenas', [ResenaController::class, 'misResenas'])->name('cliente.resenas');
@@ -105,5 +105,14 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/cupones', [CuponController::class, 'index'])->name('admin.cupones.index');
     Route::post('/cupones', [CuponController::class, 'store'])->name('admin.cupones.store');
     Route::delete('/cupones/{id}', [CuponController::class, 'destroy'])->name('admin.cupones.destroy');
-    Route::post('/validar-cupon', [CuponController::class, 'validarCupon'])->name('cliente.validarCupon');
+
+    // Reportes
+    Route::get('/reportes', [ReporteController::class, 'index'])->name('reportes.index');
+    Route::get('/reportes/ventas', [ReporteController::class, 'ventas'])->name('reportes.ventas');
+    Route::get('/reportes/productos-mas-vendidos', [ReporteController::class, 'productosMasVendidos'])->name('reportes.productos-mas-vendidos');
+    Route::get('/reportes/clientes-frecuentes', [ReporteController::class, 'clientesFrecuentes'])->name('reportes.clientes-frecuentes');
+    Route::get('/reportes/ventas-por-categoria', [ReporteController::class, 'ventasPorCategoria'])->name('reportes.ventas-por-categoria');
+    Route::get('/reportes/inventario-bajo-stock', [ReporteController::class, 'inventarioBajoStock'])->name('reportes.inventario-bajo-stock');
+    Route::get('/reportes/exportar', [ReporteController::class, 'exportar'])->name('reportes.exportar');
+    Route::get('/reportes/exportar-pdf', [ReporteController::class, 'exportarPDF'])->name('reportes.exportar-pdf');
 });
