@@ -15,11 +15,19 @@ use Barryvdh\DomPDF\Facade\Pdf;
 
 class ReporteController extends Controller
 {
+    private function checkAdmin()
+    {
+        if (!auth()->check() || auth()->user()->rol->nombre !== 'admin') {
+            abort(403, 'No autorizado. Solo los administradores pueden acceder a este módulo.');
+        }
+    }
+
     /**
      * Dashboard principal de reportes
      */
     public function index(Request $request)
     {
+        $this->checkAdmin();
         // Obtener fechas del request o usar valores por defecto (últimos 30 días)
         $fechaInicio = $request->get('fecha_inicio', Carbon::now()->subDays(30)->format('Y-m-d'));
         $fechaFin = $request->get('fecha_fin', Carbon::now()->format('Y-m-d'));
@@ -80,7 +88,7 @@ class ReporteController extends Controller
                 $totalCompras = $ventasGrupo->count();
                 $totalGastado = $ventasGrupo->sum('precio_total');
                 return (object) [
-                    'nombre' => $user->persona->nombres . ' ' . $user->persona->apellidos,
+                    'nombre' => $user->persona->nombre . ' ' . $user->persona->apellidos,
                     'email' => $user->email,
                     'total_compras' => $totalCompras,
                     'total_gastado' => $totalGastado,
@@ -150,7 +158,7 @@ class ReporteController extends Controller
 
                 return (object) [
                     'id' => $usuario->id,
-                    'nombre_completo' => $usuario->persona->nombres . ' ' . $usuario->persona->apellidos,
+                    'nombre_completo' => $usuario->persona->nombre . ' ' . $usuario->persona->apellidos,
                     'email' => $usuario->email,
                     'username' => $usuario->username,
                     'rol' => $usuario->rol->nombre ?? 'Sin rol',
@@ -209,6 +217,7 @@ class ReporteController extends Controller
      */
     public function exportarPDF(Request $request)
     {
+        $this->checkAdmin();
         $tipo = $request->get('tipo', 'ventas');
 
         // Obtener fechas del request
@@ -269,7 +278,7 @@ class ReporteController extends Controller
                     ->map(function($ventasGrupo) {
                         $user = $ventasGrupo->first()->user;
                         return (object) [
-                            'nombre' => $user->persona->nombres . ' ' . $user->persona->apellidos,
+                            'nombre' => $user->persona->nombre . ' ' . $user->persona->apellidos,
                             'email' => $user->email,
                             'total_compras' => $ventasGrupo->count(),
                             'total_gastado' => $ventasGrupo->sum('precio_total'),
@@ -343,7 +352,7 @@ class ReporteController extends Controller
 
                         return (object) [
                             'username' => $usuario->username,
-                            'nombre' => $usuario->persona->nombres . ' ' . $usuario->persona->apellidos,
+                            'nombre' => $usuario->persona->nombre . ' ' . $usuario->persona->apellidos,
                             'email' => $usuario->email,
                             'rol' => $usuario->rol->nombre ?? 'Sin rol',
                             'activo' => $usuario->activo ?? true,
@@ -407,7 +416,7 @@ class ReporteController extends Controller
             $html .= '
                 <tr>
                     <td>' . $venta->created_at->format('d/m/Y H:i') . '</td>
-                    <td>' . ($venta->user->persona->nombres ?? 'N/A') . ' ' . ($venta->user->persona->apellidos ?? '') . '</td>
+                    <td>' . ($venta->user->persona->nombre ?? 'N/A') . ' ' . ($venta->user->persona->apellidos ?? '') . '</td>
                     <td>' . $venta->user->username . '</td>
                     <td class="text-right">Bs ' . number_format($venta->precio_total, 2) . '</td>
                 </tr>';
@@ -467,7 +476,7 @@ class ReporteController extends Controller
 
         $html .= '
             </tbody>
-        <tr>
+        </table>
 
         <div class="resumen">
             <div class="resumen-item">
@@ -553,7 +562,7 @@ class ReporteController extends Controller
                             <div class="progress-fill" style="width: ' . $porcentaje . '%"></div>
                         </div>
                         ' . number_format($porcentaje, 1) . '%
-                    <tr>
+                    </td>
                 </tr>';
         }
 
@@ -739,32 +748,8 @@ class ReporteController extends Controller
      */
     public function ventas(Request $request)
     {
-        $query = Venta::with(['user.persona', 'pago.tipoPago'])
-                      ->where('estado_venta', 'confirmada');
-
-        if ($request->filled('fecha_inicio') && $request->filled('fecha_fin')) {
-            $query->whereBetween('created_at', [
-                $request->fecha_inicio . ' 00:00:00',
-                $request->fecha_fin . ' 23:59:59'
-            ]);
-        } else {
-            $query->whereMonth('created_at', Carbon::now()->month)
-                  ->whereYear('created_at', Carbon::now()->year);
-        }
-
-        if ($request->filled('vendedor_id')) {
-            $query->where('user_id', $request->vendedor_id);
-        }
-
-        $ventas = $query->orderBy('created_at', 'desc')->paginate(20);
-        $totalIngresos = $ventas->sum('precio_total');
-        $totalVentas = $ventas->count();
-
-        $vendedores = User::whereHas('rol', function($q) {
-            $q->whereIn('nombre', ['cajero', 'admin']);
-        })->with('persona')->get();
-
-        return view('admin.reportes.ventas', compact('ventas', 'totalIngresos', 'totalVentas', 'vendedores'));
+        $this->checkAdmin();
+        return redirect()->route('reportes.index', array_merge(['tipo' => 'ventas'], $request->all()));
     }
 
     /**
@@ -772,27 +757,8 @@ class ReporteController extends Controller
      */
     public function productosMasVendidos(Request $request)
     {
-        $fechaInicio = $request->get('fecha_inicio', Carbon::now()->startOfMonth()->format('Y-m-d'));
-        $fechaFin = $request->get('fecha_fin', Carbon::now()->endOfMonth()->format('Y-m-d'));
-
-        $productosMasVendidos = DB::table('detalle_ventas')
-            ->join('producto_variantes', 'detalle_ventas.producto_variante_id', '=', 'producto_variantes.id')
-            ->join('productos', 'producto_variantes.producto_id', '=', 'productos.id')
-            ->join('ventas', 'detalle_ventas.venta_id', '=', 'ventas.id')
-            ->where('ventas.estado_venta', 'confirmada')
-            ->whereBetween('ventas.created_at', [$fechaInicio . ' 00:00:00', $fechaFin . ' 23:59:59'])
-            ->select(
-                'productos.id',
-                'productos.nombre',
-                'productos.imagen_url',
-                DB::raw('SUM(detalle_ventas.cantidad) as total_vendidos'),
-                DB::raw('SUM(detalle_ventas.subtotal) as total_ingresos')
-            )
-            ->groupBy('productos.id', 'productos.nombre', 'productos.imagen_url')
-            ->orderBy('total_vendidos', 'desc')
-            ->paginate(20);
-
-        return view('admin.reportes.productos-mas-vendidos', compact('productosMasVendidos', 'fechaInicio', 'fechaFin'));
+        $this->checkAdmin();
+        return redirect()->route('reportes.index', array_merge(['tipo' => 'productos'], $request->all()));
     }
 
     /**
@@ -800,30 +766,8 @@ class ReporteController extends Controller
      */
     public function clientesFrecuentes(Request $request)
     {
-        $fechaInicio = $request->get('fecha_inicio', Carbon::now()->startOfYear()->format('Y-m-d'));
-        $fechaFin = $request->get('fecha_fin', Carbon::now()->endOfMonth()->format('Y-m-d'));
-
-        $clientesFrecuentes = Venta::where('estado_venta', 'confirmada')
-            ->whereBetween('created_at', [$fechaInicio . ' 00:00:00', $fechaFin . ' 23:59:59'])
-            ->with('user.persona')
-            ->get()
-            ->groupBy('user_id')
-            ->map(function($ventasGrupo) {
-                $user = $ventasGrupo->first()->user;
-                $totalCompras = $ventasGrupo->count();
-                $totalGastado = $ventasGrupo->sum('precio_total');
-                return (object) [
-                    'nombre' => $user->persona->nombres . ' ' . $user->persona->apellidos,
-                    'email' => $user->email,
-                    'total_compras' => $totalCompras,
-                    'total_gastado' => $totalGastado,
-                    'promedio_compra' => $totalCompras > 0 ? $totalGastado / $totalCompras : 0
-                ];
-            })
-            ->sortByDesc('total_gastado')
-            ->values();
-
-        return view('admin.reportes.clientes-frecuentes', compact('clientesFrecuentes', 'fechaInicio', 'fechaFin'));
+        $this->checkAdmin();
+        return redirect()->route('reportes.index', array_merge(['tipo' => 'clientes'], $request->all()));
     }
 
     /**
@@ -831,26 +775,8 @@ class ReporteController extends Controller
      */
     public function ventasPorCategoria(Request $request)
     {
-        $fechaInicio = $request->get('fecha_inicio', Carbon::now()->startOfMonth()->format('Y-m-d'));
-        $fechaFin = $request->get('fecha_fin', Carbon::now()->endOfMonth()->format('Y-m-d'));
-
-        $ventasPorCategoria = DB::table('detalle_ventas')
-            ->join('producto_variantes', 'detalle_ventas.producto_variante_id', '=', 'producto_variantes.id')
-            ->join('productos', 'producto_variantes.producto_id', '=', 'productos.id')
-            ->join('categorias', 'productos.categoria_id', '=', 'categorias.id')
-            ->join('ventas', 'detalle_ventas.venta_id', '=', 'ventas.id')
-            ->where('ventas.estado_venta', 'confirmada')
-            ->whereBetween('ventas.created_at', [$fechaInicio . ' 00:00:00', $fechaFin . ' 23:59:59'])
-            ->select(
-                'categorias.nombre as categoria',
-                DB::raw('SUM(detalle_ventas.cantidad) as total_vendidos'),
-                DB::raw('SUM(detalle_ventas.subtotal) as total_ingresos')
-            )
-            ->groupBy('categorias.nombre')
-            ->orderBy('total_ingresos', 'desc')
-            ->get();
-
-        return view('admin.reportes.ventas-por-categoria', compact('ventasPorCategoria', 'fechaInicio', 'fechaFin'));
+        $this->checkAdmin();
+        return redirect()->route('reportes.index', array_merge(['tipo' => 'categorias'], $request->all()));
     }
 
     /**
@@ -858,32 +784,7 @@ class ReporteController extends Controller
      */
     public function inventarioBajoStock()
     {
-        $productosBajoStock = Producto::with(['categoria', 'variantes'])
-            ->where('visible', true)
-            ->get()
-            ->filter(function($producto) {
-                return $producto->variantes->sum('stock') <= 10;
-            })
-            ->map(function($producto) {
-                $stockTotal = $producto->variantes->sum('stock');
-                $stockDetalle = $producto->variantes->map(function($v) {
-                    $talla = $v->talla ?? 'Sin talla';
-                    $color = $v->color ?? 'Sin color';
-                    return "{$talla} - {$color}: {$v->stock}";
-                })->implode(', ');
-
-                return (object) [
-                    'id' => $producto->id,
-                    'nombre' => $producto->nombre,
-                    'imagen_url' => $producto->imagen_url,
-                    'categoria' => $producto->categoria->nombre ?? 'Sin categoría',
-                    'stock_total' => $stockTotal,
-                    'stock_detalle' => $stockDetalle ?: 'Sin variantes',
-                    'precio_venta' => $producto->precio_venta
-                ];
-            })
-            ->values();
-
-        return view('admin.reportes.inventario-bajo-stock', compact('productosBajoStock'));
+        $this->checkAdmin();
+        return redirect()->route('reportes.index', ['tipo' => 'inventario']);
     }
 }

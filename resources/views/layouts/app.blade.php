@@ -145,27 +145,6 @@
                     class="px-3 py-2 text-gray-700 hover:text-purple-600 hover:bg-purple-50 rounded-lg font-bold text-sm transition">Despachos
                     y Envíos</a>
 
-                <!-- Reportes para personal -->
-                <div class="relative group">
-                    <button
-                        class="px-3 py-2 text-gray-700 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg font-bold text-sm transition flex items-center">
-                        📊 Reportes ▾
-                    </button>
-                    <div
-                        class="absolute left-0 mt-0 w-48 bg-white border border-gray-100 rounded-xl shadow-lg opacity-0 invisible translate-y-2 group-hover:opacity-100 group-hover:visible group-hover:translate-y-0 transition-all duration-200 z-50">
-                        <div class="p-2 space-y-1">
-                            <a href="{{ route('reportes.inventario-bajo-stock') }}"
-                                class="block px-3 py-2 text-sm text-gray-600 hover:bg-indigo-50 hover:text-indigo-700 rounded-md transition">
-                                Control de Inventario
-                            </a>
-                            <a href="{{ route('reportes.ventas') }}"
-                                class="block px-3 py-2 text-sm text-gray-600 hover:bg-indigo-50 hover:text-indigo-700 rounded-md transition">
-                                Productos en Almacén
-                            </a>
-                        </div>
-                    </div>
-                </div>
-
                 @elseif(auth()->user()->rol->nombre === 'cajero')
                 <div class="border-l border-gray-300 h-5 mx-2"></div>
                 <a href="{{ route('cajero.pos.index') }}"
@@ -177,27 +156,6 @@
                 <a href="{{ route('cajero.ventas.index') }}"
                     class="px-3 py-2 text-gray-700 hover:text-green-600 hover:bg-green-50 rounded-lg font-bold text-sm transition">Registro
                     de Ventas</a>
-
-                <!-- Reportes para cajero -->
-                <div class="relative group">
-                    <button
-                        class="px-3 py-2 text-gray-700 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg font-bold text-sm transition flex items-center">
-                        📊 Mis Reportes ▾
-                    </button>
-                    <div
-                        class="absolute left-0 mt-0 w-48 bg-white border border-gray-100 rounded-xl shadow-lg opacity-0 invisible translate-y-2 group-hover:opacity-100 group-hover:visible group-hover:translate-y-0 transition-all duration-200 z-50">
-                        <div class="p-2 space-y-1">
-                            <a href="{{ route('reportes.ventas', ['vendedor_id' => auth()->id()]) }}"
-                                class="block px-3 py-2 text-sm text-gray-600 hover:bg-indigo-50 hover:text-indigo-700 rounded-md transition">
-                                Mis Ventas
-                            </a>
-                            <a href="{{ route('reportes.productos-mas-vendidos') }}"
-                                class="block px-3 py-2 text-sm text-gray-600 hover:bg-indigo-50 hover:text-indigo-700 rounded-md transition">
-                                Productos Vendidos
-                            </a>
-                        </div>
-                    </div>
-                </div>
                 @endif
                 @else
                 <div class="border-l border-gray-300 h-5 mx-2"></div>

@@ -93,13 +93,26 @@
         background-color: #f9fafb;
         border: 1px solid #e5e7eb;
         border-radius: 5px;
+        overflow: hidden; /* Clear floats inside */
     }
 
     .resumen-item {
-        display: flex;
-        justify-content: space-between;
         margin-bottom: 8px;
         font-size: 11px;
+        clear: both;
+        height: 16px;
+    }
+
+    .resumen-item span {
+        display: inline-block;
+    }
+
+    .resumen-item span:first-child {
+        float: left;
+    }
+
+    .resumen-item span:last-child {
+        float: right;
     }
 
     .resumen-total {
@@ -109,6 +122,20 @@
         border-top: 2px solid #e5e7eb;
         padding-top: 8px;
         margin-top: 8px;
+        clear: both;
+        height: 20px;
+    }
+
+    .resumen-total span {
+        display: inline-block;
+    }
+
+    .resumen-total span:first-child {
+        float: left;
+    }
+
+    .resumen-total span:last-child {
+        float: right;
     }
 
     /* Footer */

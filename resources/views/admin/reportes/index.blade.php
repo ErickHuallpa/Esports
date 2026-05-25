@@ -115,7 +115,7 @@
                             @forelse($ventas ?? [] as $venta)
                             <tr class="hover:bg-gray-50">
                                 <td class="px-4 py-3 text-sm">{{ $venta->created_at->format('d/m/Y H:i') }}</td>
-                                <td class="px-4 py-3 text-sm">{{ $venta->user->persona->nombres ?? 'N/A' }}
+                                <td class="px-4 py-3 text-sm">{{ $venta->user->persona->nombre ?? 'N/A' }}
                                     {{ $venta->user->persona->apellidos ?? '' }}</td>
                                 <td class="px-4 py-3 text-sm">{{ $venta->user->username }}</td>
                                 <td class="px-4 py-3 text-sm">{{ $venta->pago->tipoPago->nombre ?? 'N/A' }}</td>
