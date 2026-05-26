@@ -100,8 +100,8 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/ofertas', [OfertaController::class, 'index'])->name('admin.ofertas.index');
     Route::post('/ofertas', [OfertaController::class, 'store'])->name('admin.ofertas.store');
     Route::delete('/ofertas/{id}', [OfertaController::class, 'destroy'])->name('admin.ofertas.destroy');
-    Route::post('/validar-cupon', [OfertaController::class, 'validarCupon'])->name('cliente.validarCupon');
-
+    Route::post('/validar-cupon', [CuponController::class, 'validarCupon'])->name('cliente.validarCupon');
+    
     Route::get('/cupones', [CuponController::class, 'index'])->name('admin.cupones.index');
     Route::post('/cupones', [CuponController::class, 'store'])->name('admin.cupones.store');
     Route::delete('/cupones/{id}', [CuponController::class, 'destroy'])->name('admin.cupones.destroy');
