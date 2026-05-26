@@ -78,7 +78,7 @@
                     <div id="pasarela_qr" class="hidden bg-blue-50/50 rounded-xl p-5 border border-blue-100 text-center space-y-4">
                         <p class="text-sm font-semibold text-blue-900">Escanea el código QR oficial por el monto exacto (Total a Pagar):</p>
                         <div class="w-48 h-48 mx-auto bg-white p-2 rounded-lg border shadow-sm flex items-center justify-center">
-                            <img src="{{ asset('qr/qr.jpg') }}" alt="QR Interbancario" class="max-w-full max-h-full">
+                            <img src="{{ asset('qr/Qr.png') }}" alt="QR Interbancario" class="max-w-full max-h-full">
                         </div>
                         <div class="max-w-md mx-auto text-left bg-white p-4 rounded-lg border">
                             <label class="block text-xs font-bold text-gray-700 uppercase">Sube tu captura o comprobante de depósito *</label>
