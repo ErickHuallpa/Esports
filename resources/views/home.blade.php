@@ -9,7 +9,6 @@
             $fotosDest = json_decode($dest->imagen_url, true) ?? [];
             $portadaDest = count($fotosDest) > 0 ? asset('storage/' . $fotosDest[0]) : 'https://via.placeholder.com/1200x800.png?text=Sin+Imagen';
             
-            // Verificamos si este destacado tiene oferta para mostrarla en el banner
             $ofertaDest = $dest->ofertas->first();
             $precioDest = $ofertaDest 
                 ? $dest->precio_venta - ($dest->precio_venta * ($ofertaDest->porcentaje_descuento / 100)) 
@@ -78,7 +77,9 @@
 
     <a href="#catalogo" class="absolute bottom-6 left-1/2 transform -translate-x-1/2 z-20 flex flex-col items-center animate-bounce text-[#dcb47c] hover:text-[#f4f4f4] transition cursor-pointer">
         <span class="text-xs font-bold uppercase tracking-widest mb-1">Catálogo</span>
-        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path></svg>
+        <svg class="w-6 h-6" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
+            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19V5m0 14-4-4m4 4 4-4"/>
+        </svg>
     </a>
 </div>
 
@@ -88,7 +89,7 @@
          style="background-image: url('{{ asset('img/cesped.png') }}'); background-position: bottom center; background-repeat: repeat-x; background-size: auto 100%; opacity: 1;">
     </div>
 
-    <div class="relative z-10 container mx-auto px-6 max-w-7xl pb-32">
+    <div class="relative z-10 container mx-auto px-6 max-w-[1400px] pb-32">
         
         <div class="text-center mb-10">
             <h1 class="text-4xl font-black text-[#0464a4] tracking-tight drop-shadow-sm">Todo Nuestro Catálogo</h1>
@@ -136,16 +137,13 @@
             </div>
         </form>
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
             @forelse($productos as $prod)
                 @php 
                     $stockTotal = $prod->variantes->sum('stock'); 
                     $fotos = json_decode($prod->imagen_url, true) ?? [];
                     $portada = count($fotos) > 0 ? asset('storage/' . $fotos[0]) : null;
                     
-                    $promedioRating = $prod->resenas->avg('calificacion') ?? 0;
-                    $totalResenas = $prod->resenas->count();
-
                     // Lógica de Ofertas
                     $ofertaActiva = $prod->ofertas->first();
                     $precioMostrar = $prod->precio_venta;
@@ -158,70 +156,51 @@
                     }
                 @endphp
                 
-                <a href="{{ route('producto.show', $prod->id) }}" class="group bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 overflow-hidden flex flex-col relative border-b-4 border-transparent hover:border-[#dcb47c] z-10">
+                <a href="{{ route('producto.show', $prod->id) }}" class="group relative bg-[#343c4c] rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-500 h-[380px] flex flex-col justify-end border-b-4 border-transparent hover:border-[#dcb47c] z-10">
                     
-                    @if($ofertaActiva)
-                        <div class="absolute top-0 right-0 bg-[#dc043c] text-white text-xs font-black px-4 py-2 rounded-bl-xl shadow-md z-20 tracking-widest border-b-2 border-l-2 border-white">
-                            -{{ $ofertaActiva->porcentaje_descuento }}% OFF
+                    @if($portada)
+                        <img src="{{ $portada }}" alt="{{ $prod->nombre }}" class="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 opacity-80 group-hover:opacity-100 bg-white">
+                    @else
+                        <div class="absolute inset-0 flex items-center justify-center bg-white opacity-80">
+                            <svg class="w-16 h-16 text-[#343c4c]/20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
                         </div>
                     @endif
 
-                    <div class="relative h-60 bg-[#f4f4f4] flex items-center justify-center overflow-hidden p-4">
-                        @if($portada)
-                            <img src="{{ $portada }}" alt="{{ $prod->nombre }}" class="w-full h-full object-contain group-hover:scale-110 transition-transform duration-700 filter drop-shadow-md">
-                        @else
-                            <div class="text-[#343c4c]/20">
-                                <svg class="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-                                </svg>
-                            </div>
+                    <div class="absolute inset-0 bg-gradient-to-t from-[#000000] via-[#343c4c]/60 to-transparent opacity-80 group-hover:opacity-95 transition-opacity duration-500"></div>
+
+                    <div class="absolute top-4 left-4 z-20 flex flex-col gap-2 items-start">
+                        @if($ofertaActiva)
+                            <span class="bg-[#dc043c] text-white text-[10px] font-black px-2.5 py-1 rounded shadow-md uppercase tracking-widest border border-[#dc043c]/50">
+                                -{{ $ofertaActiva->porcentaje_descuento }}% OFF
+                            </span>
                         @endif
-                        
-                        <div class="absolute top-3 left-3 z-10">
-                            @if($prod->agotado || $stockTotal <= 0)
-                                <span class="px-3 py-1 bg-[#dc043c] text-white text-[10px] font-black uppercase tracking-wider rounded-md shadow-sm border border-white">Agotado</span>
-                            @else
-                                <span class="px-3 py-1 bg-[#0464a4] text-white text-[10px] font-black uppercase tracking-wider rounded-md shadow-sm border border-white">Disponible</span>
-                            @endif
-                        </div>
+                        @if($prod->agotado || $stockTotal <= 0)
+                            <span class="bg-black/70 backdrop-blur text-white text-[9px] font-black px-2.5 py-1 rounded shadow-md uppercase tracking-widest border border-white/20">
+                                Agotado
+                            </span>
+                        @endif
                     </div>
 
-                    <div class="p-6 flex-grow flex flex-col justify-between bg-white z-10">
-                        <div>
-                            <span class="text-[10px] font-black text-[#dcb47c] uppercase tracking-widest">
-                                {{ $prod->categoria->nombre ?? 'General' }}
-                            </span>
-                            <h3 class="text-lg font-bold text-[#343c4c] mt-1 line-clamp-2 leading-tight min-h-[3rem] group-hover:text-[#0464a4] transition-colors">
-                                {{ $prod->nombre }}
-                            </h3>
-
-                            <div class="flex items-center mt-3">
-                                <div class="flex text-[#dcb47c] text-sm drop-shadow-sm">
-                                    @for($i = 1; $i <= 5; $i++)
-                                        @if($i <= round($promedioRating))
-                                            <svg class="w-4 h-4 fill-current" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
-                                        @else
-                                            <svg class="w-4 h-4 text-gray-200 fill-current" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
-                                        @endif
-                                    @endfor
-                                </div>
-                                <span class="text-xs text-[#343c4c]/50 ml-2 font-bold">({{ $totalResenas }})</span>
-                            </div>
-                        </div>
+                    <div class="relative z-20 p-5 transform translate-y-6 group-hover:translate-y-0 transition-transform duration-300">
+                        <span class="text-[9px] font-black text-[#dcb47c] uppercase tracking-widest drop-shadow-md">
+                            {{ $prod->categoria->nombre ?? 'General' }}
+                        </span>
                         
-                        <div class="mt-5 flex items-center justify-between border-t border-[#f4f4f4] pt-4">
+                        <h3 class="text-base font-black text-white leading-tight mt-1 line-clamp-2 drop-shadow-md group-hover:text-[#f4f4f4]">
+                            {{ $prod->nombre }}
+                        </h3>
+
+                        <div class="flex items-end justify-between mt-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300 delay-100">
                             <div class="flex flex-col">
                                 @if($precioOriginal)
-                                    <span class="text-[11px] font-bold text-[#343c4c]/40 line-through mb-0.5">Bs {{ number_format($precioOriginal, 2) }}</span>
-                                    <span class="text-2xl font-black text-[#dc043c] leading-none">Bs {{ number_format($precioMostrar, 2) }}</span>
-                                @else
-                                    <span class="text-xl font-black text-[#343c4c] leading-none mt-2">Bs {{ number_format($precioMostrar, 2) }}</span>
+                                    <span class="text-[10px] text-white/60 line-through font-bold">Bs {{ number_format($precioOriginal, 2) }}</span>
                                 @endif
+                                <span class="text-xl font-black text-[#dcb47c] drop-shadow-md">Bs {{ number_format($precioMostrar, 2) }}</span>
                             </div>
                             
-                            <span class="bg-[#343c4c] group-hover:bg-[#0464a4] text-white text-[11px] uppercase tracking-wider px-4 py-2.5 rounded-lg font-black text-center transition-colors shadow-md">
-                                Comprar
-                            </span>
+                            <div class="w-10 h-10 bg-[#0464a4] rounded-full flex items-center justify-center text-white shadow-lg border border-white/20">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                            </div>
                         </div>
                     </div>
                 </a>
@@ -236,6 +215,37 @@
                 </div>
             @endforelse
         </div>
+
+        @if($productos->hasPages())
+            <div class="mt-16 flex justify-center items-center space-x-6 relative z-10">
+                
+                @if($productos->onFirstPage())
+                    <span class="px-6 py-3.5 bg-white border-2 border-white/50 text-[#343c4c]/40 font-black uppercase tracking-widest rounded-xl text-xs cursor-not-allowed shadow-sm">
+                        &larr; Anterior
+                    </span>
+                @else
+                    <a href="{{ $productos->appends(request()->query())->previousPageUrl() }}#catalogo" class="px-6 py-3.5 bg-[#343c4c] hover:bg-[#0464a4] text-white font-black uppercase tracking-widest rounded-xl text-xs shadow-lg transition-colors transform hover:-translate-y-1">
+                        &larr; Anterior
+                    </a>
+                @endif
+
+                <span class="text-[#343c4c] font-black text-sm bg-white px-4 py-2 rounded-lg shadow-sm border border-[#343c4c]/5">
+                    Página {{ $productos->currentPage() }} de {{ $productos->lastPage() }}
+                </span>
+
+                @if($productos->hasMorePages())
+                    <a href="{{ $productos->appends(request()->query())->nextPageUrl() }}#catalogo" class="px-6 py-3.5 bg-[#343c4c] hover:bg-[#0464a4] text-white font-black uppercase tracking-widest rounded-xl text-xs shadow-lg transition-colors transform hover:-translate-y-1">
+                        Siguiente &rarr;
+                    </a>
+                @else
+                    <span class="px-6 py-3.5 bg-white border-2 border-white/50 text-[#343c4c]/40 font-black uppercase tracking-widest rounded-xl text-xs cursor-not-allowed shadow-sm">
+                        Siguiente &rarr;
+                    </span>
+                @endif
+                
+            </div>
+        @endif
+
     </div>
 </div>
 
