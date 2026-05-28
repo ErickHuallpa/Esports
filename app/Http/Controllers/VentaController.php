@@ -8,7 +8,6 @@ class VentaController extends Controller
 {
     public function index()
     {
-        // Solo mostramos ventas confirmadas
         $ventas = Venta::with(['user.persona', 'pago.tipoPago', 'detalles.variante.producto', 'orden'])
                         ->where('estado_venta', 'confirmada')
                         ->orderBy('id', 'desc')

@@ -8,22 +8,15 @@ use Illuminate\Database\Eloquent\Model;
 class Categoria extends Model
 {
     use HasFactory;
-
     protected $table = 'categorias';
-
     protected $fillable = [
         'nombre',
         'descripcion',
         'activo',
     ];
-    
     protected $casts = [
         'activo' => 'boolean',
     ];
-
-    /**
-     * Obtener todos los productos asociados a esta categoría.
-     */
     public function productos()
     {
         return $this->hasMany(Producto::class, 'categoria_id');

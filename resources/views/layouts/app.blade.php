@@ -5,6 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>E-Sports Store</title>
+    <link rel="icon" href="{{ asset('logo/logo.ico') }}" type="image/x-icon">
     @vite('resources/css/app.css')
     <style>
         /* Transiciones suaves para los menús desplegables */
@@ -27,29 +28,35 @@
 
         <nav class="container mx-auto px-6 py-4 flex justify-between items-center">
 
-            <div class="flex items-center space-x-4">
+            <div class="flex items-center space-x-4 flex-shrink-0">
                 <a href="{{ route('home') }}" class="flex items-center group transition">
                     <img src="{{ asset('logo/logo.png') }}" alt="Logo E-Sports" class="h-12 w-auto object-contain group-hover:scale-105 transition-transform drop-shadow-md">
-                    <span class="text-2xl font-black text-[#f4f4f4] tracking-wider ml-3 group-hover:text-[#dcb47c] transition-colors">
+                    <span class="text-2xl font-black text-[#f4f4f4] tracking-wider ml-3 group-hover:text-[#dcb47c] transition-colors hidden sm:block">
                         E-SPORTS
                     </span>
                 </a>
             </div>
 
-            <div class="hidden lg:flex space-x-2 items-center">
-                <a href="{{ route('home') }}" class="px-4 py-2 text-[#f4f4f4] hover:text-[#dcb47c] rounded-lg font-bold text-sm transition-colors uppercase tracking-wider">
+            <div class="hidden xl:flex flex-1 justify-center space-x-1 items-center">
+                <a href="{{ route('home') }}" class="px-3 py-2 text-[#f4f4f4] hover:text-[#dcb47c] rounded-lg font-bold text-xs 2xl:text-sm transition-colors uppercase tracking-wider whitespace-nowrap">
                     Catálogo
+                </a>
+                <a href="#" class="px-3 py-2 text-[#f4f4f4] hover:text-[#dcb47c] rounded-lg font-bold text-xs 2xl:text-sm transition-colors uppercase tracking-wider whitespace-nowrap">
+                    Novedades
+                </a>
+                <a href="#" class="px-3 py-2 text-[#dcb47c] hover:text-white rounded-lg font-bold text-xs 2xl:text-sm transition-colors uppercase tracking-wider whitespace-nowrap">
+                    Ofertas
                 </a>
 
                 @auth
                     @if(auth()->user()->rol)
-                        <div class="border-l-2 border-white/20 h-6 mx-3"></div>
+                        <div class="border-l-2 border-white/20 h-6 mx-2"></div>
 
                         @if(auth()->user()->rol->nombre === 'admin')
-                            <span class="text-[10px] font-black text-white uppercase tracking-widest bg-[#dc043c] px-3 py-1.5 rounded shadow-sm border border-[#dc043c]/50">Admin</span>
+                            <span class="text-[10px] font-black text-white uppercase tracking-widest bg-[#dc043c] px-2 py-1 rounded shadow-sm border border-[#dc043c]/50 whitespace-nowrap">Admin</span>
 
                             <div class="relative group">
-                                <button class="px-4 py-2 text-[#f4f4f4] hover:text-[#dcb47c] rounded-lg font-bold text-sm transition-colors flex items-center uppercase tracking-wider">
+                                <button class="px-3 py-2 text-[#f4f4f4] hover:text-[#dcb47c] rounded-lg font-bold text-xs 2xl:text-sm transition-colors flex items-center uppercase tracking-wider whitespace-nowrap">
                                     Gestión ▾
                                 </button>
                                 <div class="absolute left-0 mt-0 w-52 bg-white border-t-4 border-[#dcb47c] rounded-b-xl shadow-2xl opacity-0 invisible translate-y-2 group-hover:opacity-100 group-hover:visible group-hover:translate-y-0 transition-all duration-200 z-50">
@@ -66,7 +73,7 @@
                             </div>
 
                             <div class="relative group">
-                                <button class="px-4 py-2 text-[#f4f4f4] hover:text-[#dcb47c] rounded-lg font-bold text-sm transition-colors flex items-center uppercase tracking-wider">
+                                <button class="px-3 py-2 text-[#f4f4f4] hover:text-[#dcb47c] rounded-lg font-bold text-xs 2xl:text-sm transition-colors flex items-center uppercase tracking-wider whitespace-nowrap">
                                     Logística ▾
                                 </button>
                                 <div class="absolute left-0 mt-0 w-52 bg-white border-t-4 border-[#0464a4] rounded-b-xl shadow-2xl opacity-0 invisible translate-y-2 group-hover:opacity-100 group-hover:visible group-hover:translate-y-0 transition-all duration-200 z-50">
@@ -78,7 +85,7 @@
                             </div>
 
                             <div class="relative group">
-                                <button class="px-4 py-2 text-[#f4f4f4] hover:text-[#dcb47c] rounded-lg font-bold text-sm transition-colors flex items-center uppercase tracking-wider">
+                                <button class="px-3 py-2 text-[#f4f4f4] hover:text-[#dcb47c] rounded-lg font-bold text-xs 2xl:text-sm transition-colors flex items-center uppercase tracking-wider whitespace-nowrap">
                                     Finanzas ▾
                                 </button>
                                 <div class="absolute left-0 mt-0 w-52 bg-white border-t-4 border-[#dc043c] rounded-b-xl shadow-2xl opacity-0 invisible translate-y-2 group-hover:opacity-100 group-hover:visible group-hover:translate-y-0 transition-all duration-200 z-50">
@@ -91,7 +98,7 @@
                             </div>
 
                             <div class="relative group">
-                                <button class="px-4 py-2 text-[#f4f4f4] hover:text-[#dcb47c] rounded-lg font-bold text-sm transition-colors flex items-center uppercase tracking-wider">
+                                <button class="px-3 py-2 text-[#f4f4f4] hover:text-[#dcb47c] rounded-lg font-bold text-xs 2xl:text-sm transition-colors flex items-center uppercase tracking-wider whitespace-nowrap">
                                     Reportes ▾
                                 </button>
                                 <div class="absolute left-0 mt-0 w-52 bg-white border-t-4 border-[#dcb47c] rounded-b-xl shadow-2xl opacity-0 invisible translate-y-2 group-hover:opacity-100 group-hover:visible group-hover:translate-y-0 transition-all duration-200 z-50">
@@ -104,33 +111,28 @@
                             </div>
 
                         @elseif(auth()->user()->rol->nombre === 'personal')
-                            <span class="text-[10px] font-black text-white uppercase tracking-widest bg-[#0464a4] px-3 py-1.5 rounded shadow-sm">Logística</span>
-                            <a href="{{ route('personal.inventario.index') }}" class="px-4 py-2 text-[#f4f4f4] hover:text-[#dcb47c] font-bold text-sm transition uppercase">Ingreso Almacén</a>
-                            <a href="{{ route('personal.envios.index') }}" class="px-4 py-2 text-[#f4f4f4] hover:text-[#dcb47c] font-bold text-sm transition uppercase">Despachos</a>
+                            <span class="text-[10px] font-black text-white uppercase tracking-widest bg-[#0464a4] px-3 py-1.5 rounded shadow-sm whitespace-nowrap">Logística</span>
+                            <a href="{{ route('personal.inventario.index') }}" class="px-3 py-2 text-[#f4f4f4] hover:text-[#dcb47c] font-bold text-xs 2xl:text-sm transition uppercase whitespace-nowrap">Ingreso Almacén</a>
+                            <a href="{{ route('personal.envios.index') }}" class="px-3 py-2 text-[#f4f4f4] hover:text-[#dcb47c] font-bold text-xs 2xl:text-sm transition uppercase whitespace-nowrap">Despachos</a>
 
                         @elseif(auth()->user()->rol->nombre === 'cajero')
-                            <span class="text-[10px] font-black text-[#343c4c] uppercase tracking-widest bg-[#dcb47c] px-3 py-1.5 rounded shadow-sm">Caja</span>
-                            <a href="{{ route('cajero.pos.index') }}" class="px-4 py-2 bg-[#dc043c] text-white hover:bg-[#dcb47c] hover:text-[#343c4c] rounded-lg font-bold text-sm transition shadow-sm uppercase">Punto de Venta</a>
-                            <a href="{{ route('admin.pagos.index') }}" class="px-4 py-2 text-[#f4f4f4] hover:text-[#dcb47c] font-bold text-sm transition uppercase">Pagos QR</a>
-                            <a href="{{ route('cajero.ventas.index') }}" class="px-4 py-2 text-[#f4f4f4] hover:text-[#dcb47c] font-bold text-sm transition uppercase">Ventas</a>
+                            <span class="text-[10px] font-black text-[#343c4c] uppercase tracking-widest bg-[#dcb47c] px-3 py-1.5 rounded shadow-sm whitespace-nowrap">Caja</span>
+                            <a href="{{ route('cajero.pos.index') }}" class="px-3 py-2 bg-[#dc043c] text-white hover:bg-[#dcb47c] hover:text-[#343c4c] rounded-lg font-bold text-xs 2xl:text-sm transition shadow-sm uppercase whitespace-nowrap">Punto de Venta</a>
+                            <a href="{{ route('admin.pagos.index') }}" class="px-3 py-2 text-[#f4f4f4] hover:text-[#dcb47c] font-bold text-xs 2xl:text-sm transition uppercase whitespace-nowrap">Pagos QR</a>
+                            <a href="{{ route('cajero.ventas.index') }}" class="px-3 py-2 text-[#f4f4f4] hover:text-[#dcb47c] font-bold text-xs 2xl:text-sm transition uppercase whitespace-nowrap">Ventas</a>
                         @endif
                     @endif
-                @else
-                    <div class="border-l-2 border-white/20 h-6 mx-3"></div>
-                    <a href="#" class="px-4 py-2 text-[#f4f4f4] hover:text-[#dcb47c] font-bold text-sm transition uppercase tracking-wider">Novedades</a>
-                    <a href="#" class="px-4 py-2 text-[#dcb47c] hover:text-white font-bold text-sm transition uppercase tracking-wider">Ofertas</a>
                 @endauth
             </div>
 
-            <div class="flex items-center space-x-4">
+            <div class="flex items-center space-x-4 flex-shrink-0">
                 @guest
                     @if(!\App\Models\User::whereHas('rol', function($q){ $q->where('nombre', 'admin'); })->exists())
-                        <a href="{{ route('admin.register.form') }}" class="px-5 py-2.5 text-sm font-black tracking-widest uppercase text-white bg-[#dc043c] rounded-lg hover:bg-[#0464a4] shadow-md animate-pulse transition">
+                        <a href="{{ route('admin.register.form') }}" class="px-4 py-2 text-xs 2xl:text-sm font-black tracking-widest uppercase text-white bg-[#dc043c] rounded-lg hover:bg-[#0464a4] shadow-md animate-pulse transition">
                             Configurar Sistema
                         </a>
                     @endif
-                    <a href="{{ route('login') }}" class="text-[#f4f4f4] hover:text-[#dcb47c] font-bold text-sm transition uppercase tracking-wider">Login</a>
-                    <a href="{{ route('cliente.register.form') }}" class="px-5 py-2 text-sm font-bold text-[#343c4c] bg-[#dcb47c] rounded-md hover:bg-white shadow transition uppercase tracking-wider">Registro</a>
+                    <a href="{{ route('login') }}" class="px-5 py-2.5 text-xs 2xl:text-sm font-bold text-[#343c4c] bg-[#dcb47c] rounded-md hover:bg-white shadow transition uppercase tracking-wider">Iniciar Sesión</a>
                 @endguest
 
                 @auth

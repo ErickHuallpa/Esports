@@ -21,42 +21,25 @@ class ReporteController extends Controller
             abort(403, 'No autorizado. Solo los administradores pueden acceder a este módulo.');
         }
     }
-
-    /**
-     * Dashboard principal de reportes
-     */
     public function index(Request $request)
     {
         $this->checkAdmin();
-        // Obtener fechas del request o usar valores por defecto (últimos 30 días)
         $fechaInicio = $request->get('fecha_inicio', Carbon::now()->subDays(30)->format('Y-m-d'));
         $fechaFin = $request->get('fecha_fin', Carbon::now()->format('Y-m-d'));
-
-        // Validar fechas
         $request->validate([
             'fecha_inicio' => 'nullable|date',
             'fecha_fin' => 'nullable|date|after_or_equal:fecha_inicio',
         ]);
-
-        // Query base para ventas (para las tarjetas de resumen)
         $query = Venta::with(['user.persona', 'pago.tipoPago'])
                       ->where('estado_venta', 'confirmada')
                       ->whereBetween('created_at', [$fechaInicio . ' 00:00:00', $fechaFin . ' 23:59:59']);
-
-        // Filtrar por vendedor si se selecciona
         if ($request->filled('vendedor_id')) {
             $query->where('user_id', $request->vendedor_id);
         }
-
-        // Datos para Ventas (paginados)
         $ventas = $query->orderBy('created_at', 'desc')->paginate(20);
-
-        // Totales para las tarjetas
         $totalVentas = $ventas->total();
         $totalIngresos = $ventas->sum('precio_total');
         $ticketPromedio = $totalVentas > 0 ? $totalIngresos / $totalVentas : 0;
-
-        // Productos más vendidos
         $productosMasVendidos = DB::table('detalle_ventas')
             ->join('producto_variantes', 'detalle_ventas.producto_variante_id', '=', 'producto_variantes.id')
             ->join('productos', 'producto_variantes.producto_id', '=', 'productos.id')
@@ -74,10 +57,7 @@ class ReporteController extends Controller
             ->orderBy('total_vendidos', 'desc')
             ->limit(10)
             ->get();
-
         $totalProductosVendidos = $productosMasVendidos->sum('total_vendidos');
-
-        // Clientes frecuentes
         $clientesFrecuentes = Venta::where('estado_venta', 'confirmada')
             ->whereBetween('created_at', [$fechaInicio . ' 00:00:00', $fechaFin . ' 23:59:59'])
             ->with('user.persona')
@@ -98,8 +78,6 @@ class ReporteController extends Controller
             ->sortByDesc('total_gastado')
             ->take(10)
             ->values();
-
-        // Ventas por categoría
         $ventasPorCategoria = DB::table('detalle_ventas')
             ->join('producto_variantes', 'detalle_ventas.producto_variante_id', '=', 'producto_variantes.id')
             ->join('productos', 'producto_variantes.producto_id', '=', 'productos.id')
@@ -115,8 +93,6 @@ class ReporteController extends Controller
             ->groupBy('categorias.nombre')
             ->orderBy('total_ingresos', 'desc')
             ->get();
-
-        // Productos con bajo stock (SIN filtro de fechas - estado actual)
         $productosBajoStock = Producto::with(['categoria', 'variantes'])
             ->where('visible', true)
             ->get()
@@ -130,7 +106,6 @@ class ReporteController extends Controller
                     $color = $v->color ?? 'Sin color';
                     return "{$talla} - {$color}: {$v->stock}";
                 })->implode(', ');
-
                 return (object) [
                     'id' => $producto->id,
                     'nombre' => $producto->nombre,
@@ -142,8 +117,6 @@ class ReporteController extends Controller
                 ];
             })
             ->values();
-
-        // REPORTE DE USUARIOS - Todos los usuarios del sistema
         $usuariosSistema = User::with(['rol', 'persona'])
             ->orderBy('created_at', 'desc')
             ->get()
@@ -151,11 +124,9 @@ class ReporteController extends Controller
                 $totalVentasRealizadas = Venta::where('user_id', $usuario->id)
                     ->where('estado_venta', 'confirmada')
                     ->count();
-
                 $totalMontoVendido = Venta::where('user_id', $usuario->id)
                     ->where('estado_venta', 'confirmada')
                     ->sum('precio_total');
-
                 return (object) [
                     'id' => $usuario->id,
                     'nombre_completo' => $usuario->persona->nombre . ' ' . $usuario->persona->apellidos,
@@ -168,14 +139,11 @@ class ReporteController extends Controller
                     'total_vendido' => $totalMontoVendido
                 ];
             });
-
-        // REPORTE DE PROVEEDORES
         $proveedores = Proveedor::with(['productos'])
             ->get()
             ->map(function($proveedor) {
                 $totalProductos = $proveedor->productos->count();
                 $productosActivos = $proveedor->productos->where('visible', true)->count();
-
                 return (object) [
                     'id' => $proveedor->id,
                     'nombre_empresa' => $proveedor->nombre_empresa,
@@ -188,12 +156,9 @@ class ReporteController extends Controller
                     'fecha_registro' => $proveedor->created_at
                 ];
             });
-
-        // Vendedores para el filtro
         $vendedores = User::whereHas('rol', function($q) {
             $q->whereIn('nombre', ['cajero', 'admin']);
         })->with('persona')->get();
-
         return view('admin.reportes.index', compact(
             'ventas',
             'totalVentas',
@@ -211,42 +176,30 @@ class ReporteController extends Controller
             'fechaFin'
         ));
     }
-
-    /**
-     * Exportar reporte a PDF usando una sola plantilla
-     */
     public function exportarPDF(Request $request)
     {
         $this->checkAdmin();
         $tipo = $request->get('tipo', 'ventas');
-
-        // Obtener fechas del request
         $fechaInicio = $request->get('fecha_inicio', Carbon::now()->subDays(30)->format('Y-m-d'));
         $fechaFin = $request->get('fecha_fin', Carbon::now()->format('Y-m-d'));
-
         $titulo = '';
         $subtitulo = '';
         $contenidoHtml = '';
-
         switch ($tipo) {
             case 'ventas':
                 $query = Venta::with(['user.persona', 'pago.tipoPago'])
                               ->where('estado_venta', 'confirmada')
                               ->whereBetween('created_at', [$fechaInicio . ' 00:00:00', $fechaFin . ' 23:59:59']);
-
                 if ($request->filled('vendedor_id')) {
                     $query->where('user_id', $request->vendedor_id);
                 }
-
                 $ventas = $query->orderBy('created_at', 'desc')->get();
                 $totalIngresos = $ventas->sum('precio_total');
                 $totalVentas = $ventas->count();
-
                 $titulo = '📊 Reporte de Ventas';
                 $subtitulo = "Período: " . date('d/m/Y', strtotime($fechaInicio)) . " - " . date('d/m/Y', strtotime($fechaFin));
                 $contenidoHtml = $this->generarTablaVentas($ventas, $totalIngresos, $totalVentas);
                 break;
-
             case 'productos':
                 $productos = DB::table('detalle_ventas')
                     ->join('producto_variantes', 'detalle_ventas.producto_variante_id', '=', 'producto_variantes.id')
@@ -262,13 +215,11 @@ class ReporteController extends Controller
                     ->groupBy('productos.nombre')
                     ->orderBy('total_vendidos', 'desc')
                     ->get();
-
                 $totalIngresos = $productos->sum('total_ingresos');
                 $titulo = '🏆 Productos Más Vendidos';
                 $subtitulo = "Período: " . date('d/m/Y', strtotime($fechaInicio)) . " - " . date('d/m/Y', strtotime($fechaFin));
                 $contenidoHtml = $this->generarTablaProductos($productos, $totalIngresos);
                 break;
-
             case 'clientes':
                 $clientes = Venta::where('estado_venta', 'confirmada')
                     ->whereBetween('created_at', [$fechaInicio . ' 00:00:00', $fechaFin . ' 23:59:59'])
@@ -286,12 +237,10 @@ class ReporteController extends Controller
                     })
                     ->sortByDesc('total_gastado')
                     ->values();
-
                 $titulo = '👥 Clientes Frecuentes';
                 $subtitulo = "Período: " . date('d/m/Y', strtotime($fechaInicio)) . " - " . date('d/m/Y', strtotime($fechaFin));
                 $contenidoHtml = $this->generarTablaClientes($clientes);
                 break;
-
             case 'categorias':
                 $categorias = DB::table('detalle_ventas')
                     ->join('producto_variantes', 'detalle_ventas.producto_variante_id', '=', 'producto_variantes.id')
@@ -308,13 +257,11 @@ class ReporteController extends Controller
                     ->groupBy('categorias.nombre')
                     ->orderBy('total_ingresos', 'desc')
                     ->get();
-
                 $totalIngresos = $categorias->sum('total_ingresos');
                 $titulo = '📊 Ventas por Categoría';
                 $subtitulo = "Período: " . date('d/m/Y', strtotime($fechaInicio)) . " - " . date('d/m/Y', strtotime($fechaFin));
                 $contenidoHtml = $this->generarTablaCategorias($categorias, $totalIngresos);
                 break;
-
             case 'inventario':
                 $productos = Producto::with(['categoria', 'variantes'])
                     ->where('visible', true)
@@ -331,12 +278,10 @@ class ReporteController extends Controller
                         ];
                     })
                     ->values();
-
                 $titulo = '⚠️ Productos con Stock Bajo';
                 $subtitulo = "Reporte al: " . date('d/m/Y');
                 $contenidoHtml = $this->generarTablaInventario($productos);
                 break;
-
             case 'usuarios':
                 $usuarios = User::with(['rol', 'persona'])
                     ->orderBy('created_at', 'desc')
@@ -345,11 +290,9 @@ class ReporteController extends Controller
                         $totalVentas = Venta::where('user_id', $usuario->id)
                             ->where('estado_venta', 'confirmada')
                             ->count();
-
                         $totalVendido = Venta::where('user_id', $usuario->id)
                             ->where('estado_venta', 'confirmada')
                             ->sum('precio_total');
-
                         return (object) [
                             'username' => $usuario->username,
                             'nombre' => $usuario->persona->nombre . ' ' . $usuario->persona->apellidos,
@@ -360,12 +303,10 @@ class ReporteController extends Controller
                             'total_vendido' => $totalVendido
                         ];
                     });
-
                 $titulo = '👥 Usuarios del Sistema';
                 $subtitulo = "Reporte general de usuarios registrados";
                 $contenidoHtml = $this->generarTablaUsuarios($usuarios);
                 break;
-
             case 'proveedores':
                 $proveedores = Proveedor::with(['productos'])
                     ->get()
@@ -380,24 +321,17 @@ class ReporteController extends Controller
                             'fecha_registro' => $proveedor->created_at
                         ];
                     });
-
                 $titulo = '🏢 Reporte de Proveedores';
                 $subtitulo = "Reporte general de proveedores registrados";
                 $contenidoHtml = $this->generarTablaProveedores($proveedores);
                 break;
-
             default:
                 return redirect()->back()->with('error', 'Tipo de reporte no válido');
         }
-
         $pdf = Pdf::loadView('admin.reportes.plantilla', compact('titulo', 'subtitulo', 'contenidoHtml'));
         $pdf->setPaper('A4', 'portrait');
-
         return $pdf->download($tipo . '_' . date('Y-m-d') . '.pdf');
     }
-
-    // ==================== MÉTODOS PRIVADOS PARA GENERAR HTML ====================
-
     private function generarTablaVentas($ventas, $totalIngresos, $totalVentas)
     {
         $html = '
@@ -411,7 +345,6 @@ class ReporteController extends Controller
                 </tr>
             </thead>
             <tbody>';
-
         foreach($ventas as $venta) {
             $html .= '
                 <tr>
@@ -421,11 +354,9 @@ class ReporteController extends Controller
                     <td class="text-right">Bs ' . number_format($venta->precio_total, 2) . '</td>
                 </tr>';
         }
-
         $html .= '
             </tbody>
         </table>
-
         <div class="resumen">
             <div class="resumen-item">
                 <span>Total de Ventas:</span>
@@ -440,10 +371,8 @@ class ReporteController extends Controller
                 <span>Bs ' . number_format($totalVentas > 0 ? $totalIngresos / $totalVentas : 0, 2) . '</span>
             </div>
         </div>';
-
         return $html;
     }
-
     private function generarTablaProductos($productos, $totalIngresos)
     {
         $html = '
@@ -457,7 +386,6 @@ class ReporteController extends Controller
                 </tr>
             </thead>
             <tbody>';
-
         foreach($productos as $producto) {
             $porcentaje = ($producto->total_ingresos / ($totalIngresos ?? 1)) * 100;
             $html .= '
@@ -473,11 +401,9 @@ class ReporteController extends Controller
                     </td>
                 </tr>';
         }
-
         $html .= '
             </tbody>
         </table>
-
         <div class="resumen">
             <div class="resumen-item">
                 <span>Total de Productos Vendidos:</span>
@@ -488,10 +414,8 @@ class ReporteController extends Controller
                 <span>Bs ' . number_format($totalIngresos, 2) . '</span>
             </div>
         </div>';
-
         return $html;
     }
-
     private function generarTablaClientes($clientes)
     {
         $html = '
@@ -506,7 +430,6 @@ class ReporteController extends Controller
                 </tr>
             </thead>
             <tbody>';
-
         foreach($clientes as $cliente) {
             $html .= '
                 <tr>
@@ -517,11 +440,9 @@ class ReporteController extends Controller
                     <td class="text-right">Bs ' . number_format($cliente->total_gastado / $cliente->total_compras, 2) . '</td>
                 </tr>';
         }
-
         $html .= '
             </tbody>
         </table>
-
         <div class="resumen">
             <div class="resumen-item">
                 <span>Total de Clientes:</span>
@@ -532,10 +453,8 @@ class ReporteController extends Controller
                 <span>Bs ' . number_format($clientes->sum('total_gastado'), 2) . '</span>
             </div>
         </div>';
-
         return $html;
     }
-
     private function generarTablaCategorias($categorias, $totalIngresos)
     {
         $html = '
@@ -549,7 +468,6 @@ class ReporteController extends Controller
                 </tr>
             </thead>
             <tbody>';
-
         foreach($categorias as $categoria) {
             $porcentaje = ($categoria->total_ingresos / ($totalIngresos ?? 1)) * 100;
             $html .= '
@@ -565,11 +483,9 @@ class ReporteController extends Controller
                     </td>
                 </tr>';
         }
-
         $html .= '
             </tbody>
         </table>
-
         <div class="resumen">
             <div class="resumen-item">
                 <span>Total de Categorías:</span>
@@ -580,10 +496,8 @@ class ReporteController extends Controller
                 <span>Bs ' . number_format($totalIngresos, 2) . '</span>
             </div>
         </div>';
-
         return $html;
     }
-
     private function generarTablaInventario($productos)
     {
         $html = '
@@ -597,7 +511,6 @@ class ReporteController extends Controller
                 </tr>
             </thead>
             <tbody>';
-
         foreach($productos as $producto) {
             $badgeClass = $producto->stock <= 3 ? 'badge-danger' : 'badge-warning';
             $html .= '
@@ -610,11 +523,9 @@ class ReporteController extends Controller
                     <td class="text-right">Bs ' . number_format($producto->precio, 2) . '</td>
                 </tr>';
         }
-
         $html .= '
             </tbody>
         </table>
-
         <div class="resumen">
             <div class="resumen-item">
                 <span>Total de Productos Críticos (Stock ≤ 3):</span>
@@ -629,10 +540,8 @@ class ReporteController extends Controller
                 <span>' . $productos->sum('stock') . ' unidades</span>
             </div>
         </div>';
-
         return $html;
     }
-
     private function generarTablaUsuarios($usuarios)
     {
         $html = '
@@ -649,7 +558,6 @@ class ReporteController extends Controller
                 </tr>
             </thead>
             <tbody>';
-
         foreach($usuarios as $usuario) {
             $html .= '
                 <tr>
@@ -662,11 +570,9 @@ class ReporteController extends Controller
                     <td class="text-right">Bs ' . number_format($usuario->total_vendido, 2) . '</td>
                 </tr>';
         }
-
         $html .= '
             </tbody>
         </table>
-
         <div class="resumen">
             <div class="resumen-item">
                 <span>Total de Usuarios:</span>
@@ -681,10 +587,8 @@ class ReporteController extends Controller
                 <span>Bs ' . number_format($usuarios->sum('total_vendido'), 2) . '</span>
             </div>
         </div>';
-
         return $html;
     }
-
     private function generarTablaProveedores($proveedores)
     {
         $html = '
@@ -700,7 +604,6 @@ class ReporteController extends Controller
                 </tr>
             </thead>
             <tbody>';
-
         foreach($proveedores as $proveedor) {
             $porcentaje = $proveedor->total_productos > 0 ? ($proveedor->productos_activos / $proveedor->total_productos) * 100 : 0;
             $html .= '
@@ -718,11 +621,9 @@ class ReporteController extends Controller
                     </td>
                 </tr>';
         }
-
         $html .= '
             </tbody>
         </table>
-
         <div class="resumen">
             <div class="resumen-item">
                 <span>Total de Proveedores:</span>
@@ -737,51 +638,28 @@ class ReporteController extends Controller
                 <span>' . $proveedores->sum('productos_activos') . '</span>
             </div>
         </div>';
-
         return $html;
     }
-
-    // ==================== MÉTODOS EXISTENTES ====================
-
-    /**
-     * Reporte de ventas detallado
-     */
     public function ventas(Request $request)
     {
         $this->checkAdmin();
         return redirect()->route('reportes.index', array_merge(['tipo' => 'ventas'], $request->all()));
     }
-
-    /**
-     * Reporte de productos más vendidos
-     */
     public function productosMasVendidos(Request $request)
     {
         $this->checkAdmin();
         return redirect()->route('reportes.index', array_merge(['tipo' => 'productos'], $request->all()));
     }
-
-    /**
-     * Reporte de clientes frecuentes
-     */
     public function clientesFrecuentes(Request $request)
     {
         $this->checkAdmin();
         return redirect()->route('reportes.index', array_merge(['tipo' => 'clientes'], $request->all()));
     }
-
-    /**
-     * Reporte de ventas por categoría
-     */
     public function ventasPorCategoria(Request $request)
     {
         $this->checkAdmin();
         return redirect()->route('reportes.index', array_merge(['tipo' => 'categorias'], $request->all()));
     }
-
-    /**
-     * Reporte de inventario con bajo stock
-     */
     public function inventarioBajoStock()
     {
         $this->checkAdmin();

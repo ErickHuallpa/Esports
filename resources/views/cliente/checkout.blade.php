@@ -1,156 +1,208 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="max-w-5xl mx-auto">
-    <div class="mb-6">
-        <h1 class="text-3xl font-black text-gray-900 tracking-tight">Finalizar Compra (Checkout)</h1>
-        <p class="text-gray-500 text-sm">Completa tus datos de envío y procesa tu pago electrónico.</p>
+<div class="max-w-6xl mx-auto my-6">
+    <div class="mb-8 flex flex-col sm:flex-row justify-between sm:items-center gap-4">
+        <div>
+            <h1 class="text-3xl font-black text-[#343c4c] tracking-tight uppercase">Finalizar Compra</h1>
+            <p class="text-[#343c4c]/60 text-sm mt-1 font-medium">Completa tus datos de envío y procesa tu pago de forma segura.</p>
+        </div>
     </div>
 
     <form action="{{ route('checkout.store') }}" method="POST" enctype="multipart/form-data">
         @csrf
 
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <div class="lg:col-span-2 space-y-6">
-                <div class="bg-white rounded-xl border p-6 shadow-sm space-y-4">
-                    <h3 class="text-lg font-bold text-gray-800 border-b pb-2">1. Método de Entrega</h3>
-
-                    <div>
-                        <label class="block text-xs font-bold text-gray-700 uppercase mb-2">Selecciona la modalidad *</label>
-                        <select id="metodo_entrega" name="metodo_entrega" onchange="alternarLogistica()" required class="w-full rounded-lg border-gray-300 border p-2.5 text-sm bg-white focus:ring-blue-500">
-                            <option value="tienda" {{ old('metodo_entrega') == 'tienda' ? 'selected' : '' }}>Recoger en Tienda Física (Potosí - Gratis)</option>
-                            <option value="delivery" {{ old('metodo_entrega') == 'delivery' ? 'selected' : '' }}>Servicio de Delivery a Domicilio (Potosí - Bs 5.00)</option>
-                            <option value="envio" {{ old('metodo_entrega') == 'envio' ? 'selected' : '' }}>Envío por Encomienda (Resto de Bolivia)</option>
-                        </select>
+            
+            <!-- COLUMNA IZQUIERDA: Logística y Pago -->
+            <div class="lg:col-span-2 space-y-8">
+                
+                <!-- PANEL 1: MÉTODOS DE ENTREGA -->
+                <div class="bg-white rounded-2xl shadow-xl overflow-hidden border border-[#343c4c]/10">
+                    <div class="bg-[#343c4c] px-6 py-4 border-b-4 border-[#0464a4]">
+                        <h3 class="text-sm font-black text-white uppercase tracking-widest flex items-center">
+                            <svg class="w-5 h-5 mr-2 text-[#0464a4]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                            1. Método de Entrega
+                        </h3>
                     </div>
 
-                    <div id="campos_delivery" class="hidden grid-cols-1 md:grid-cols-2 gap-4 pt-2">
-                        <div class="md:col-span-2">
-                            <div class="bg-blue-50 p-3 rounded-lg border border-blue-100 mb-2">
-                                <p class="text-xs text-blue-800 font-medium">Se añadirá un recargo fijo de Bs 5.00 al total de tu compra por el servicio de entrega en Potosí.</p>
-                            </div>
-                            <input type="hidden" name="ciudad_delivery" value="Potosí">
-                        </div>
+                    <div class="p-6 space-y-5">
                         <div>
-                            <label class="block text-xs font-bold text-gray-700 uppercase">Zona / Barrio *</label>
-                            <input type="text" name="zona_destino" id="zona_destino" value="{{ old('zona_destino') }}" placeholder="Ej: San Clemente" class="mt-1 block w-full rounded-lg border-gray-300 border p-2 text-sm focus:ring-blue-500">
-                        </div>
-                        <div class="md:col-span-2">
-                            <label class="block text-xs font-bold text-gray-700 uppercase">Dirección Exacta de tu Casa *</label>
-                            <textarea name="direccion_delivery" id="direccion_delivery" rows="2" placeholder="Ej: Calle Chayanta Nro 45, puerta azul..." class="mt-1 block w-full rounded-lg border-gray-300 border p-2 text-sm focus:ring-blue-500">{{ old('direccion_delivery') }}</textarea>
-                        </div>
-                    </div>
-
-                    <div id="campos_encomienda" class="hidden grid-cols-1 gap-4 pt-2">
-                        <div class="bg-amber-50 p-4 rounded-lg border border-amber-200">
-                            <p class="text-sm font-bold text-amber-900 mb-1">📦 Modalidad Encomienda</p>
-                            <p class="text-xs text-amber-800 mb-3">El paquete será despachado a través de empresas de transporte. Deberás recogerlo personalmente en la Terminal de Buses o Agencia correspondiente a tu ciudad.</p>
-
-                            <label class="block text-xs font-bold text-amber-900 uppercase mb-2">¿Cómo deseas pagar el transporte? *</label>
-                            <select id="pago_envio" name="pago_envio" onchange="alternarLogistica()" class="w-full rounded border-amber-300 bg-white p-2 text-sm focus:ring-amber-500">
-                                <option value="destino" {{ old('pago_envio') == 'destino' ? 'selected' : '' }}>Pago en Destino (Pagarás a la empresa al recoger tu caja)</option>
-                                <option value="pagado" {{ old('pago_envio') == 'pagado' ? 'selected' : '' }}>Pagar ahora (Añadir Bs 25.00 estimados a tu transferencia QR)</option>
+                            <label class="block text-[10px] font-black text-[#343c4c] uppercase tracking-widest mb-2">Selecciona la modalidad *</label>
+                            <select id="metodo_entrega" name="metodo_entrega" onchange="alternarLogistica()" required class="w-full bg-[#f4f4f4] border-none rounded-xl p-3.5 text-sm focus:ring-2 focus:ring-[#0464a4] font-bold text-[#343c4c] cursor-pointer shadow-inner">
+                                <option value="tienda" {{ old('metodo_entrega') == 'tienda' ? 'selected' : '' }}>🏪 Recoger en Tienda Física (Potosí - Gratis)</option>
+                                <option value="delivery" {{ old('metodo_entrega') == 'delivery' ? 'selected' : '' }}>🛵 Servicio de Delivery a Domicilio (Potosí - Bs 5.00)</option>
+                                <option value="envio" {{ old('metodo_entrega') == 'envio' ? 'selected' : '' }}>📦 Envío por Encomienda (Resto de Bolivia)</option>
                             </select>
                         </div>
 
-                        <div>
-                            <label class="block text-xs font-bold text-gray-700 uppercase">Ciudad / Municipio de Destino *</label>
-                            <input type="text" name="ciudad_encomienda" id="ciudad_encomienda" value="{{ old('ciudad_encomienda') }}" placeholder="Ej: Betanzos, Tupiza, Oruro..." class="mt-1 block w-full rounded-lg border-gray-300 border p-2 text-sm focus:ring-blue-500">
+                        <!-- Opciones Delivery -->
+                        <div id="campos_delivery" class="hidden grid-cols-1 md:grid-cols-2 gap-5 pt-3 border-t-2 border-[#f4f4f4]">
+                            <div class="md:col-span-2">
+                                <div class="bg-[#0464a4]/10 border border-[#0464a4]/20 p-4 rounded-xl flex items-start space-x-3">
+                                    <span class="text-xl">🛵</span>
+                                    <p class="text-xs text-[#0464a4] font-bold leading-relaxed">Se añadirá un recargo fijo de Bs 5.00 al total de tu compra por el servicio de entrega dentro de la ciudad de Potosí.</p>
+                                </div>
+                                <input type="hidden" name="ciudad_delivery" value="Potosí">
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-black text-[#343c4c] uppercase tracking-widest mb-1.5">Zona / Barrio *</label>
+                                <input type="text" name="zona_destino" id="zona_destino" value="{{ old('zona_destino') }}" placeholder="Ej: San Clemente" 
+                                    class="w-full bg-[#f4f4f4] border-none rounded-xl p-3 text-sm focus:ring-2 focus:ring-[#0464a4] font-bold text-[#343c4c]">
+                            </div>
+                            <div class="md:col-span-2">
+                                <label class="block text-[10px] font-black text-[#343c4c] uppercase tracking-widest mb-1.5">Dirección Exacta de tu Casa *</label>
+                                <textarea name="direccion_delivery" id="direccion_delivery" rows="2" placeholder="Ej: Calle Chayanta Nro 45, puerta azul..." 
+                                    class="w-full bg-[#f4f4f4] border-none rounded-xl p-3 text-sm focus:ring-2 focus:ring-[#0464a4] font-bold text-[#343c4c] resize-none">{{ old('direccion_delivery') }}</textarea>
+                            </div>
+                        </div>
+
+                        <!-- Opciones Encomienda -->
+                        <div id="campos_encomienda" class="hidden grid-cols-1 gap-5 pt-3 border-t-2 border-[#f4f4f4]">
+                            <div class="bg-[#dcb47c]/20 border border-[#dcb47c]/40 p-5 rounded-xl">
+                                <p class="text-sm font-black text-[#343c4c] mb-2 uppercase tracking-wider">📦 Modalidad Encomienda</p>
+                                <p class="text-xs text-[#343c4c]/80 mb-4 font-medium">El paquete será despachado a través de empresas de transporte. Deberás recogerlo personalmente en la Terminal de Buses o Agencia correspondiente a tu ciudad.</p>
+
+                                <label class="block text-[10px] font-black text-[#343c4c] uppercase tracking-widest mb-2">¿Cómo deseas pagar el transporte? *</label>
+                                <select id="pago_envio" name="pago_envio" onchange="alternarLogistica()" class="w-full bg-white border border-white rounded-xl p-3 text-sm focus:ring-2 focus:ring-[#dcb47c] font-bold text-[#343c4c] shadow-sm cursor-pointer">
+                                    <option value="destino" {{ old('pago_envio') == 'destino' ? 'selected' : '' }}>Pago en Destino (Pagarás a la empresa al recoger tu caja)</option>
+                                    <option value="pagado" {{ old('pago_envio') == 'pagado' ? 'selected' : '' }}>Pagar ahora (Añadir Bs 25.00 estimados a tu cobro total)</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label class="block text-[10px] font-black text-[#343c4c] uppercase tracking-widest mb-1.5">Ciudad / Municipio de Destino *</label>
+                                <input type="text" name="ciudad_encomienda" id="ciudad_encomienda" value="{{ old('ciudad_encomienda') }}" placeholder="Ej: Betanzos, Tupiza, Oruro..." 
+                                    class="w-full bg-[#f4f4f4] border-none rounded-xl p-3.5 text-sm focus:ring-2 focus:ring-[#0464a4] font-bold text-[#343c4c]">
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                <div class="bg-white rounded-xl border p-6 shadow-sm space-y-4">
-                    <h3 class="text-lg font-bold text-gray-800 border-b pb-2">2. Forma de Pago</h3>
-
-                    <div class="grid grid-cols-2 gap-4">
-                        @foreach($tipoPagos as $tp)
-                            <label class="border rounded-xl p-4 flex items-center space-x-3 cursor-pointer bg-gray-50 hover:bg-gray-100 transition">
-                                <input type="radio" name="tipo_pago_id" value="{{ $tp->id }}" data-nombre="{{ $tp->nombre }}" onchange="alternarPasarela('{{ $tp->nombre }}')" required class="text-blue-600 focus:ring-blue-500" {{ old('tipo_pago_id') == $tp->id ? 'checked' : '' }}>
-                                <div>
-                                    <span class="block font-bold text-sm text-gray-800">{{ $tp->nombre }}</span>
-                                    <span class="block text-xs text-gray-400">{{ $tp->descripcion }}</span>
-                                </div>
-                            </label>
-                        @endforeach
+                <!-- PANEL 2: FORMA DE PAGO -->
+                <div class="bg-white rounded-2xl shadow-xl overflow-hidden border border-[#343c4c]/10">
+                    <div class="bg-[#343c4c] px-6 py-4 border-b-4 border-[#dc043c]">
+                        <h3 class="text-sm font-black text-white uppercase tracking-widest flex items-center">
+                            <svg class="w-5 h-5 mr-2 text-[#dc043c]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path></svg>
+                            2. Forma de Pago
+                        </h3>
                     </div>
 
-                    <div id="pasarela_qr" class="hidden bg-blue-50/50 rounded-xl p-5 border border-blue-100 text-center space-y-4">
-                        <p class="text-sm font-semibold text-blue-900">Escanea el código QR oficial por el monto exacto (Total a Pagar):</p>
-                        <div class="w-48 h-48 mx-auto bg-white p-2 rounded-lg border shadow-sm flex items-center justify-center">
-                            <img src="{{ asset('qr/Qr.png') }}" alt="QR Interbancario" class="max-w-full max-h-full">
+                    <div class="p-6 space-y-6">
+                        <!-- Radios de Pago Personalizados -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            @foreach($tipoPagos as $tp)
+                                <label class="relative cursor-pointer">
+                                    <input type="radio" name="tipo_pago_id" value="{{ $tp->id }}" data-nombre="{{ $tp->nombre }}" onchange="alternarPasarela('{{ $tp->nombre }}')" required class="peer sr-only" {{ old('tipo_pago_id') == $tp->id ? 'checked' : '' }}>
+                                    <div class="border-2 border-[#f4f4f4] rounded-xl p-5 hover:bg-[#f4f4f4]/50 transition-all peer-checked:border-[#0464a4] peer-checked:bg-[#0464a4]/5 flex items-center space-x-4">
+                                        <div class="w-5 h-5 rounded-full border-2 border-gray-300 flex items-center justify-center peer-checked:border-[#0464a4]">
+                                            <div class="w-2.5 h-2.5 rounded-full bg-[#0464a4] opacity-0 peer-checked:opacity-100 transition-opacity"></div>
+                                        </div>
+                                        <div>
+                                            <span class="block font-black text-sm text-[#343c4c] uppercase tracking-wider">{{ $tp->nombre }}</span>
+                                            <span class="block text-xs font-medium text-[#343c4c]/50 mt-1">{{ $tp->descripcion }}</span>
+                                        </div>
+                                    </div>
+                                </label>
+                            @endforeach
                         </div>
-                        <div class="max-w-md mx-auto text-left bg-white p-4 rounded-lg border">
-                            <label class="block text-xs font-bold text-gray-700 uppercase">Sube tu captura o comprobante de depósito *</label>
-                            <input type="file" name="comprobante" id="comprobante" accept="image/*" class="mt-1 block w-full text-xs text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-blue-600 file:text-white file:cursor-pointer hover:file:bg-blue-700">
+
+                        <!-- Formulario de Subida QR -->
+                        <div id="pasarela_qr" class="hidden bg-[#f4f4f4] rounded-2xl p-6 border-2 border-dashed border-[#dcb47c] text-center space-y-5">
+                            <p class="text-sm font-black text-[#343c4c] uppercase tracking-widest">Escanea el código QR oficial por el monto exacto</p>
+                            
+                            <div class="w-56 h-56 mx-auto bg-white p-3 rounded-2xl shadow-md flex items-center justify-center transform hover:scale-105 transition-transform">
+                                <img src="{{ asset('qr/Qr.png') }}" alt="QR Interbancario" class="max-w-full max-h-full">
+                            </div>
+                            
+                            <div class="max-w-md mx-auto text-left bg-white p-5 rounded-xl shadow-sm border border-[#343c4c]/5">
+                                <label class="block text-[10px] font-black text-[#dc043c] uppercase tracking-widest mb-2">Sube tu captura de depósito *</label>
+                                <input type="file" name="comprobante" id="comprobante" accept="image/*" 
+                                    class="block w-full text-xs text-[#343c4c] font-medium file:mr-4 file:py-2.5 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-black file:uppercase file:tracking-wider file:bg-[#0464a4] file:text-white file:cursor-pointer hover:file:bg-[#343c4c] transition-colors bg-[#f4f4f4] rounded-lg">
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
 
+            <!-- COLUMNA DERECHA: Resumen de Orden (Sticky) -->
             <div class="space-y-4">
-                <div class="bg-white rounded-xl border p-6 shadow-sm sticky top-6">
-                    <h3 class="text-lg font-bold text-gray-800 border-b pb-2 mb-4">Resumen de Orden</h3>
+                <div class="bg-white rounded-2xl shadow-xl overflow-hidden border border-[#343c4c]/10 sticky top-6">
+                    <div class="bg-[#343c4c] px-6 py-4 border-b-4 border-[#dcb47c]">
+                        <h3 class="text-sm font-black text-white uppercase tracking-widest text-center">Resumen de Orden</h3>
+                    </div>
 
-                    <div class="divide-y max-h-48 overflow-y-auto mb-4 pr-1">
-                        @foreach($cartItems as $item)
-                            <div class="py-2.5 flex justify-between text-sm">
-                                <div>
-                                    <p class="font-bold text-gray-800 line-clamp-1">{{ $item['nombre'] }}</p>
-                                    <span class="text-xs text-gray-400">Cant: {{ $item['cantidad'] }} @if($item['talla'])| Talla: {{ $item['talla'] }}@endif</span>
+                    <div class="p-6">
+                        <!-- Lista de Productos -->
+                        <div class="divide-y divide-[#f4f4f4] max-h-60 overflow-y-auto mb-6 pr-2 custom-scrollbar">
+                            @foreach($cartItems as $item)
+                                <div class="py-3 flex justify-between items-center text-sm">
+                                    <div class="pr-4">
+                                        <p class="font-bold text-[#343c4c] line-clamp-1 uppercase">{{ $item['nombre'] }}</p>
+                                        <span class="text-[10px] font-black text-[#dcb47c] tracking-widest">Cant: {{ $item['cantidad'] }} @if($item['talla'])| Talla: {{ $item['talla'] }}@endif</span>
+                                    </div>
+                                    <span class="font-black text-[#0464a4] whitespace-nowrap">Bs {{ number_format($item['precio'] * $item['cantidad'], 2) }}</span>
                                 </div>
-                                <span class="font-bold text-gray-700">Bs {{ number_format($item['precio'] * $item['cantidad'], 2) }}</span>
+                            @endforeach
+                        </div>
+
+                        @php
+                            $subtotalArticulos = 0;
+                            foreach($cartItems as $i) $subtotalArticulos += $i['precio'] * $i['cantidad'];
+                        @endphp
+
+                        <!-- Aplicar Cupón -->
+                        <div class="mb-6 bg-[#f4f4f4] p-4 rounded-xl">
+                            <label class="block text-[10px] font-black text-[#343c4c] uppercase tracking-widest mb-2">¿Tienes un código de descuento?</label>
+                            <div class="flex space-x-2">
+                                <input type="text" id="cupon_input" placeholder="Ej: ESPORTS10" class="w-full uppercase font-bold text-[#343c4c] rounded-lg border-none p-3 text-sm focus:ring-2 focus:ring-[#0464a4]">
+                                <button type="button" onclick="aplicarCuponAJAX()" class="bg-[#343c4c] hover:bg-[#dcb47c] text-white hover:text-[#343c4c] font-black uppercase tracking-wider px-5 rounded-lg text-xs transition-colors shadow-sm">Aplicar</button>
                             </div>
-                        @endforeach
+                            <p id="cupon_mensaje" class="text-[10px] font-black mt-2 hidden uppercase tracking-wider"></p>
+                        </div>
+
+                        <!-- Tabla de Totales -->
+                        <div class="border-t-2 border-[#f4f4f4] pt-5 space-y-3 text-sm">
+                            <div class="flex justify-between text-[#343c4c] font-bold">
+                                <span>Subtotal Artículos:</span>
+                                <span>Bs {{ number_format($subtotalArticulos, 2) }}</span>
+                            </div>
+
+                            <div id="fila_descuento" class="flex justify-between text-[#dc043c] font-black hidden">
+                                <span>Descuento aplicado:</span>
+                                <span id="descuento_display">- Bs 0.00</span>
+                            </div>
+
+                            <div class="flex justify-between text-[#0464a4] font-black">
+                                <span>Logística / Encomienda:</span>
+                                <span id="costo_envio_display">Bs 0.00</span>
+                            </div>
+
+                            <div class="flex flex-col items-center justify-center border-t-4 border-[#dcb47c] pt-5 mt-5 bg-[#f4f4f4] rounded-xl pb-5 shadow-inner">
+                                <span class="text-[10px] font-black text-[#343c4c] uppercase tracking-widest mb-1">Total a depositar</span>
+                                <span class="text-4xl font-black text-[#dc043c] drop-shadow-sm" id="total_final_display">Bs {{ number_format($subtotalArticulos, 2) }}</span>
+                            </div>
+                        </div>
+
+                        <input type="hidden" id="cupon_id" name="cupon_id" value="">
+                        <input type="hidden" id="descuento_oculto" name="descuento_aplicado" value="0">
+
+                        <button type="submit" class="w-full mt-6 bg-[#dc043c] hover:bg-[#343c4c] text-white font-black uppercase tracking-widest py-4 rounded-xl shadow-lg transition-colors text-sm transform hover:-translate-y-0.5">
+                            Procesar Compra
+                        </button>
                     </div>
-
-                    @php
-                        $subtotalArticulos = 0;
-                        foreach($cartItems as $i) $subtotalArticulos += $i['precio'] * $i['cantidad'];
-                    @endphp
-
-                    <div class="mb-4">
-                        <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1">¿Tienes un código de descuento?</label>
-                        <div class="flex space-x-2">
-                            <input type="text" id="cupon_input" placeholder="Ej: ESPORTS10" class="w-full uppercase rounded-lg border-gray-300 p-2 text-sm focus:ring-blue-500">
-                            <button type="button" onclick="aplicarCuponAJAX()" class="bg-gray-900 hover:bg-black text-white font-bold px-4 rounded-lg text-xs transition">Aplicar</button>
-                        </div>
-                        <p id="cupon_mensaje" class="text-xs font-bold mt-1 hidden"></p>
-                    </div>
-
-                    <div class="border-t pt-4 space-y-3 text-sm">
-                        <div class="flex justify-between text-gray-600">
-                            <span>Subtotal Artículos:</span>
-                            <span class="font-semibold" id="subtotal_base_display">Bs {{ number_format($subtotalArticulos, 2) }}</span>
-                        </div>
-
-                        <div id="fila_descuento" class="flex justify-between text-red-500 font-bold hidden">
-                            <span>Descuento aplicado:</span>
-                            <span id="descuento_display">- Bs 0.00</span>
-                        </div>
-
-                        <div class="flex justify-between text-gray-600">
-                            <span>Logística / Encomienda:</span>
-                            <span class="font-semibold text-blue-600" id="costo_envio_display">Bs 0.00</span>
-                        </div>
-
-                        <div class="flex justify-between font-black text-lg text-gray-900 border-t pt-3">
-                            <span>Total a depositar:</span>
-                            <span class="text-green-600" id="total_final_display">Bs {{ number_format($subtotalArticulos, 2) }}</span>
-                        </div>
-                    </div>
-
-                    <input type="hidden" id="cupon_id" name="cupon_id" value="">
-                    <input type="hidden" id="descuento_oculto" name="descuento_aplicado" value="0">
-
-                    <button type="submit" class="w-full mt-6 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3.5 rounded-xl shadow-md transition">
-                        Confirmar y Enviar Solicitud
-                    </button>
                 </div>
             </div>
         </div>
     </form>
 </div>
+
+<style>
+    /* Scrollbar minimalista para el resumen de orden */
+    .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+    .custom-scrollbar::-webkit-scrollbar-track { background: #f4f4f4; border-radius: 10px; }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background: #dcb47c; border-radius: 10px; }
+</style>
 
 <script>
     const subtotalBase = {{ $subtotalArticulos }};
@@ -178,11 +230,11 @@
 
             const data = await res.json();
 
-            mensaje.classList.remove('hidden', 'text-red-500', 'text-green-600');
+            mensaje.classList.remove('hidden', 'text-[#dc043c]', 'text-[#0464a4]');
             mensaje.innerText = data.mensaje;
 
             if (data.valido) {
-                mensaje.classList.add('text-green-600');
+                mensaje.classList.add('text-[#0464a4]');
                 filaDesc.classList.remove('hidden');
                 document.getElementById('cupon_input').readOnly = true;
 
@@ -199,7 +251,7 @@
                 inputCuponId.value = data.cupon.id;
                 alternarLogistica();
             } else {
-                mensaje.classList.add('text-red-500');
+                mensaje.classList.add('text-[#dc043c]');
                 filaDesc.classList.add('hidden');
                 montoDescuentoActivo = 0;
                 inputOculto.value = 0;
@@ -266,6 +318,7 @@
         const pasarela = document.getElementById('pasarela_qr');
         const comprobante = document.getElementById('comprobante');
 
+        // Los radios ahora tienen styling via Tailwind `peer`, solo nos ocupamos de mostrar el div del QR
         if (nombreMetodo === 'QR') {
             pasarela.classList.remove('hidden');
             comprobante.required = true;
