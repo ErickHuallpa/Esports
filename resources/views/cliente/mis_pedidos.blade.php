@@ -17,7 +17,7 @@
         @forelse($ventas as $venta)
             <div class="bg-white rounded-2xl shadow-xl overflow-hidden border border-[#343c4c]/10">
                 
-                <div class="bg-[#343c4c] px-6 py-5 border-b-4 border-[#dcb47c] flex flex-wrap justify-between items-center gap-6">
+                <div class="bg-[#343c4c] px-6 py-5 border-b-4 border-[#dcb47c] flex flex-wrap justify-between items-center gap-6 relative">
                     <div class="flex flex-col">
                         <span class="text-[10px] font-black text-[#dcb47c] uppercase tracking-widest mb-1">Orden de Compra</span>
                         <span class="text-2xl font-black text-white">#{{ $venta->id }}</span>
@@ -29,21 +29,30 @@
                         <p class="text-2xl font-black text-[#dc043c] drop-shadow-md bg-white/10 px-4 py-1 rounded-lg">Bs {{ number_format($venta->precio_total, 2) }}</p>
                     </div>
 
-                    <div class="flex flex-col items-end">
-                        <span class="text-[10px] font-black text-[#dcb47c] uppercase tracking-widest mb-2">Estado Financiero</span>
+                    <div class="flex flex-col items-end space-y-2">
+                        <div class="text-right">
+                            <span class="text-[10px] font-black text-[#dcb47c] uppercase tracking-widest block mb-1">Estado Financiero</span>
+                            @if($venta->pago->estado === 'verificado')
+                                <p class="text-[11px] font-black text-[#0464a4] bg-[#f4f4f4] px-4 py-1.5 rounded-md uppercase tracking-wider shadow-sm border border-[#0464a4]/20 inline-block">
+                                    ✅ Pago Aprobado
+                                </p>
+                            @elseif($venta->pago->estado === 'rechazado')
+                                <p class="text-[11px] font-black text-white bg-[#dc043c] px-4 py-1.5 rounded-md uppercase tracking-wider shadow-sm inline-block">
+                                    ❌ Pago Rechazado
+                                </p>
+                                <span class="text-[10px] text-white/80 font-medium mt-1.5 max-w-[200px] text-right leading-tight block">Motivo: {{ $venta->pago->motivo_rechazo }}</span>
+                            @else
+                                <p class="text-[11px] font-black text-[#343c4c] bg-[#dcb47c] px-4 py-1.5 rounded-md uppercase tracking-wider shadow-sm inline-block">
+                                    ⏳ En verificación
+                                </p>
+                            @endif
+                        </div>
+
                         @if($venta->pago->estado === 'verificado')
-                            <p class="text-[11px] font-black text-[#0464a4] bg-[#f4f4f4] px-4 py-1.5 rounded-md uppercase tracking-wider shadow-sm border border-[#0464a4]/20">
-                                ✅ Pago Aprobado
-                            </p>
-                        @elseif($venta->pago->estado === 'rechazado')
-                            <p class="text-[11px] font-black text-white bg-[#dc043c] px-4 py-1.5 rounded-md uppercase tracking-wider shadow-sm">
-                                ❌ Pago Rechazado
-                            </p>
-                            <span class="text-[10px] text-white/80 font-medium mt-1.5 max-w-[200px] text-right leading-tight">Motivo: {{ $venta->pago->motivo_rechazo }}</span>
-                        @else
-                            <p class="text-[11px] font-black text-[#343c4c] bg-[#dcb47c] px-4 py-1.5 rounded-md uppercase tracking-wider shadow-sm">
-                                ⏳ En verificación (QR)
-                            </p>
+                            <a href="{{ route('cliente.comprobante', $venta->id) }}" class="inline-flex items-center px-4 py-2 bg-[#dcb47c] hover:bg-white text-[#343c4c] font-black uppercase tracking-widest text-[9px] rounded shadow-md transition-colors border border-transparent hover:border-[#dcb47c]">
+                                <svg class="w-3.5 h-3.5 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                                Descargar Comprobante
+                            </a>
                         @endif
                     </div>
                 </div>
@@ -109,7 +118,6 @@
                                     <div class="bg-white p-4 rounded-xl border border-[#dcb47c]/50 text-center shadow-sm">
                                         <span class="text-2xl mb-1 block">🏪</span>
                                         <p class="text-xs text-[#343c4c] font-bold uppercase tracking-wider">Recojo en Tienda</p>
-                                        <p class="text-[10px] text-[#343c4c]/60 mt-1">El paquete te espera en Potosí.</p>
                                     </div>
                                 @endif
                             @endif

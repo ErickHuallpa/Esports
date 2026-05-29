@@ -77,6 +77,9 @@ Route::middleware(['auth'])->group(function () {
     // Opciones generales para todos los usuarios (Clientes o Staff)
     Route::get('/mis-pedidos', [PedidoController::class, 'misPedidos'])->name('cliente.pedidos');
     Route::get('/mis-resenas', [ResenaController::class, 'misResenas'])->name('cliente.resenas');
+    
+    // --> NUEVA RUTA PARA DESCARGAR COMPROBANTE PDF <--
+    Route::get('/mis-pedidos/{id}/comprobante', [PedidoController::class, 'descargarComprobante'])->name('cliente.comprobante');
 
     Route::get('/gestion/pagos', [CompraController::class, 'listaPagosPendientes'])->name('admin.pagos.index');
     Route::post('/gestion/pagos/{id}/verificar', [CompraController::class, 'verificarPago'])->name('admin.pagos.verificar');

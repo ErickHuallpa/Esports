@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\Venta;
 use App\Models\Envio;
 use App\Models\Orden;
+use Barryvdh\DomPDF\Facade\Pdf; // IMPORTAMOS LA LIBRERÍA DE PDF
 
 class PedidoController extends Controller
 {
@@ -16,6 +17,30 @@ class PedidoController extends Controller
                         ->orderBy('id', 'desc')
                         ->get();
         return view('cliente.mis_pedidos', compact('ventas'));
+    }
+
+    // =======================================================
+    // NUEVO: DESCARGAR COMPROBANTE PDF
+    // =======================================================
+    public function descargarComprobante($id)
+    {
+        $venta = Venta::with(['pago.tipoPago', 'detalles.variante.producto', 'user.persona'])->findOrFail($id);
+
+        // Seguridad: Solo el dueño de la compra puede descargar el comprobante
+        if ($venta->user_id !== auth()->id()) {
+            abort(403, 'No tienes permiso para descargar este comprobante.');
+        }
+
+        // Regla: Solo pagos verificados/aprobados pueden generar comprobante
+        if ($venta->pago->estado !== 'verificado') {
+            abort(403, 'El comprobante solo está disponible para pagos aprobados.');
+        }
+
+        // Cargar vista PDF
+        $pdf = Pdf::loadView('cliente.comprobante_pdf', compact('venta'));
+        
+        // Descargar archivo
+        return $pdf->download('Comprobante_Venta_'.$venta->id.'.pdf');
     }
 
     // =======================================================
@@ -42,11 +67,10 @@ class PedidoController extends Controller
             'responsable_entrega' => 'nullable|string|max:150',
         ]);
 
-        // Buscamos la Orden por su ID
         $orden = Orden::with('envio')->findOrFail($id);
 
         $estadoOrden = '';
-        $estadoEnvioDB = null; // Variable para mapear a los valores válidos del Enum de BD
+        $estadoEnvioDB = null; 
 
         switch ($request->estado_logistico) {
             case 'preparando': 
@@ -55,41 +79,38 @@ class PedidoController extends Controller
                 break;
             case 'listo_tienda': 
                 $estadoOrden = 'Listo para Recojo en Tienda'; 
-                $estadoEnvioDB = 'preparando'; // Como no tiene envío, no importa mucho, pero por si acaso.
+                $estadoEnvioDB = 'preparando';
                 break;
             case 'en_camino': 
                 $estadoOrden = 'En Tránsito a Destino'; 
-                $estadoEnvioDB = 'en camino'; // Mapeo exacto al Enum ['en camino']
+                $estadoEnvioDB = 'en camino';
                 break;
             case 'llego_destino': 
                 $estadoOrden = 'Llegó al Destino / Agencia'; 
-                $estadoEnvioDB = 'en camino'; // Técnicamente sigue en camino hasta que lo entregan.
+                $estadoEnvioDB = 'en camino';
                 break;
             case 'entregado': 
                 $estadoOrden = 'Completada / Entregada'; 
-                $estadoEnvioDB = 'entregado'; // Mapeo exacto al Enum ['entregado']
+                $estadoEnvioDB = 'entregado';
                 break;
             case 'fallido': 
                 $estadoOrden = 'Problema Logístico'; 
-                $estadoEnvioDB = 'fallido'; // Mapeo exacto al Enum ['fallido']
+                $estadoEnvioDB = 'fallido';
                 break;
             default:
                 $estadoOrden = $request->estado_logistico;
         }
 
-        // 1. Actualizamos el estado general de la Orden
         $orden->update(['estado_orden' => $estadoOrden]);
 
-        // 2. Si la Orden REQUIERE envío, actualizamos los datos
         if ($orden->envio && $estadoEnvioDB) {
             $orden->envio->update([
-                'estado_envio' => $estadoEnvioDB, // Pasamos el valor mapeado y correcto para la DB
+                'estado_envio' => $estadoEnvioDB,
                 'codigo_seguimiento' => $request->codigo_seguimiento,
                 'responsable_entrega' => $request->responsable_entrega,
                 'admin_asignado' => auth()->id(),
             ]);
 
-            // Si se marcó como entregado, sellar la fecha real
             if ($request->estado_logistico === 'entregado') {
                 $orden->envio->update(['fecha_entrega_real' => now()]);
             }
