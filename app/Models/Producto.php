@@ -21,6 +21,7 @@ class Producto extends Model
         'precio_venta',
         'imagen_url',
         'modelo_3d_url',
+        'video_url', // <--- NUEVO CAMPO AÑADIDO
         'visible',
         'agotado',
     ];
@@ -36,7 +37,6 @@ class Producto extends Model
     }
 
     // RELACIONES
-
     public function categoria()
     {
         return $this->belongsTo(Categoria::class, 'categoria_id');
