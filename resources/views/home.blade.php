@@ -90,12 +90,6 @@
     </div>
 
     <div class="relative z-10 container mx-auto px-6 max-w-[1400px] pb-32">
-        
-        <div class="text-center mb-10">
-            <h1 class="text-4xl font-black text-[#0464a4] tracking-tight drop-shadow-sm">Todo Nuestro Catálogo</h1>
-            <p class="text-lg text-[#343c4c] mt-2 font-medium">Encuentra los mejores productos y ofertas actuales.</p>
-        </div>
-
         <form method="GET" action="{{ route('home') }}#catalogo" class="bg-[#343c4c] p-5 rounded-2xl shadow-xl border-b-4 border-[#dcb47c] flex flex-col md:flex-row gap-4 items-center mb-12">
             
             <div class="w-full md:w-2/5 relative">
