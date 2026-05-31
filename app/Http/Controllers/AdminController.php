@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
+use App\Http\Requests\Auth\RegisterAdminRequest;
 use App\Models\Persona;
 use App\Models\User;
 use App\Models\Rol;
@@ -22,19 +22,9 @@ class AdminController extends Controller
         }
         return view('admin.register');
     }
-    public function store(Request $request)
+    public function store(RegisterAdminRequest $request)
     {
-        $request->validate([
-            'nombre' => 'required|string|max:100',
-            'apellidos' => 'required|string|max:100',
-            'ci' => 'required|string|max:20|unique:personas,ci',
-            'telefono' => 'nullable|string|max:20',
-            'direccion' => 'nullable|string',
-            'fecha_nacimiento' => 'nullable|date',
-            'email' => 'required|string|email|max:150|unique:users,email',
-            'username' => 'required|string|max:80|unique:users,username',
-            'password' => 'required|string|min:6|confirmed', // Requiere campo password_confirmation
-        ]);
+        // ✅ Todas las validaciones están en RegisterAdminRequest.
         $rolAdmin = Rol::where('nombre', 'admin')->first();
         if (!$rolAdmin) {
             return back()->with('error', 'Error crítico: El rol "admin" no está registrado en la base de datos.');

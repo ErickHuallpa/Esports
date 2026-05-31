@@ -2,7 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
+use App\Http\Requests\Profile\UpdateProfileRequest;
+use App\Http\Requests\Profile\UpdatePasswordRequest;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
@@ -14,21 +15,11 @@ class ProfileController extends Controller
         $user = auth()->user()->load('persona');
         return view('profile.edit', compact('user'));
     }
-    public function update(Request $request)
+    public function update(UpdateProfileRequest $request)
     {
         $user = auth()->user();
         $persona = $user->persona;
-        $request->validate([
-            'nombre' => 'required|string|max:100',
-            'apellidos' => 'required|string|max:100',
-            'ci' => ['required', 'string', 'max:20', Rule::unique('personas')->ignore($persona->id)],
-            'telefono' => 'nullable|string|max:20',
-            'direccion' => 'nullable|string|max:255',
-            'fecha_nacimiento' => 'nullable|date',
-            'username' => ['required', 'string', 'max:50', Rule::unique('users')->ignore($user->id)],
-            'email' => ['required', 'email', 'max:150', Rule::unique('users')->ignore($user->id)],
-            'foto_perfil' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
-        ]);
+        // ✅ Todas las validaciones están en UpdateProfileRequest.
         if ($request->hasFile('foto_perfil')) {
             if ($user->foto_perfil && Storage::disk('public')->exists($user->foto_perfil)) {
                 Storage::disk('public')->delete($user->foto_perfil);
@@ -51,12 +42,9 @@ class ProfileController extends Controller
         ]);
         return redirect()->back()->with('success', 'Tus datos de perfil han sido actualizados correctamente.');
     }
-    public function updatePassword(Request $request)
+    public function updatePassword(UpdatePasswordRequest $request)
     {
-        $request->validate([
-            'current_password' => 'required|string',
-            'password' => 'required|string|min:8|confirmed',
-        ]);
+        // ✅ Validaciones en UpdatePasswordRequest (contraseña fuerte, no igual a la actual).
         $user = auth()->user();
         if (!Hash::check($request->current_password, $user->password)) {
             return back()->withErrors(['current_password' => 'La contraseña actual no coincide con nuestros registros.']);

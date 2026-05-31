@@ -109,20 +109,36 @@
                     <h4 class="text-xs font-bold text-gray-500 uppercase border-b pb-2">Identidad Civil</h4>
                     <div>
                         <label class="block text-xs font-bold text-gray-700">Nombres *</label>
-                        <input type="text" id="nombre" name="nombre" required class="mt-1 block w-full rounded border-gray-300 p-2 text-sm focus:ring-blue-500">
+                        <input type="text" id="nombre" name="nombre" required
+                            minlength="2" maxlength="100"
+                            placeholder="Ej: Juan Carlos"
+                            class="mt-1 block w-full rounded border-gray-300 p-2 text-sm focus:ring-blue-500">
+                        <p class="text-[10px] text-red-600 font-semibold hidden mt-0.5" id="adm_err_nombre"></p>
                     </div>
                     <div>
                         <label class="block text-xs font-bold text-gray-700">Apellidos *</label>
-                        <input type="text" id="apellidos" name="apellidos" required class="mt-1 block w-full rounded border-gray-300 p-2 text-sm focus:ring-blue-500">
+                        <input type="text" id="apellidos" name="apellidos" required
+                            minlength="2" maxlength="100"
+                            placeholder="Ej: Pérez López"
+                            class="mt-1 block w-full rounded border-gray-300 p-2 text-sm focus:ring-blue-500">
+                        <p class="text-[10px] text-red-600 font-semibold hidden mt-0.5" id="adm_err_apellidos"></p>
                     </div>
                     <div class="grid grid-cols-2 gap-2">
                         <div>
                             <label class="block text-xs font-bold text-gray-700">C.I.</label>
-                            <input type="text" id="ci" name="ci" class="mt-1 block w-full rounded border-gray-300 p-2 text-sm focus:ring-blue-500">
+                            <input type="text" id="ci" name="ci"
+                                minlength="5" maxlength="20"
+                                placeholder="Ej: 1234567 LP"
+                                class="mt-1 block w-full rounded border-gray-300 p-2 text-sm focus:ring-blue-500">
+                            <p class="text-[10px] text-red-600 font-semibold hidden mt-0.5" id="adm_err_ci"></p>
                         </div>
                         <div>
                             <label class="block text-xs font-bold text-gray-700">Teléfono</label>
-                            <input type="text" id="telefono" name="telefono" class="mt-1 block w-full rounded border-gray-300 p-2 text-sm focus:ring-blue-500">
+                            <input type="tel" id="telefono" name="telefono"
+                                maxlength="8" inputmode="numeric"
+                                placeholder="Ej: 71234567"
+                                class="mt-1 block w-full rounded border-gray-300 p-2 text-sm focus:ring-blue-500">
+                            <p class="text-[10px] text-red-600 font-semibold hidden mt-0.5" id="adm_err_telefono"></p>
                         </div>
                     </div>
                 </div>
@@ -140,15 +156,27 @@
                     </div>
                     <div>
                         <label class="block text-xs font-bold text-gray-700">Correo Electrónico *</label>
-                        <input type="email" id="email" name="email" required placeholder="correo@ejemplo.com" class="mt-1 block w-full rounded border-gray-300 p-2 text-sm focus:ring-blue-500 bg-white">
+                        <input type="email" id="email" name="email" required
+                            maxlength="150"
+                            placeholder="correo@ejemplo.com"
+                            class="mt-1 block w-full rounded border-gray-300 p-2 text-sm focus:ring-blue-500 bg-white">
+                        <p class="text-[10px] text-red-600 font-semibold hidden mt-0.5" id="adm_err_email"></p>
                     </div>
                     <div>
                         <label class="block text-xs font-bold text-gray-700">Username *</label>
-                        <input type="text" id="username" name="username" required placeholder="usuario123" class="mt-1 block w-full rounded border-gray-300 p-2 text-sm focus:ring-blue-500 bg-white">
+                        <input type="text" id="username" name="username" required
+                            minlength="4" maxlength="80"
+                            placeholder="min. 4 chars (letras, números, _)"
+                            pattern="[a-zA-Z0-9_]+"
+                            class="mt-1 block w-full rounded border-gray-300 p-2 text-sm focus:ring-blue-500 bg-white">
                     </div>
                     <div>
                         <label id="labelPassword" class="block text-xs font-bold text-gray-700">Contraseña Temporal *</label>
-                        <input type="password" id="password" name="password" required placeholder="Mínimo 6 caracteres" class="mt-1 block w-full rounded border-gray-300 p-2 text-sm focus:ring-blue-500 bg-white">
+                        <input type="password" id="password" name="password" required
+                            minlength="8"
+                            placeholder="Mín. 8 chars: A, a, 1, @ (obligatorio)"
+                            class="mt-1 block w-full rounded border-gray-300 p-2 text-sm focus:ring-blue-500 bg-white">
+                        <p class="text-[10px] text-gray-500 font-medium mt-0.5">Requerido: mayúscula, minúscula, número y carácter especial.</p>
                     </div>
                 </div>
             </div>
@@ -162,7 +190,15 @@
 </div>
 
 <script>
-    function abrirModalUsuario(user = null) {
+        // Teléfono: solo dígitos en modal
+        const telAdm = document.getElementById('telefono');
+        if (telAdm) {
+            telAdm.addEventListener('input', () => {
+                telAdm.value = telAdm.value.replace(/[^0-9]/g, '').slice(0, 8);
+            });
+        }
+
+        function abrirModalUsuario(user = null) {
         const modal = document.getElementById('modalUsuario');
         const form = document.getElementById('usuarioForm');
         const method = document.getElementById('formMethod');

@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
+use App\Http\Requests\Auth\RegisterClienteRequest;
 use App\Models\Persona;
 use App\Models\User;
 use App\Models\Rol;
@@ -19,18 +19,10 @@ class ClienteController extends Controller
         }
         return view('cliente.register');
     }
-    public function store(Request $request)
+    public function store(RegisterClienteRequest $request)
     {
-        $request->validate([
-            'nombre' => 'required|string|max:100',
-            'apellidos' => 'required|string|max:100',
-            'ci' => 'nullable|string|max:20|unique:personas,ci',
-            'telefono' => 'nullable|string|max:20',
-            'direccion' => 'nullable|string',
-            'email' => 'required|string|email|max:150|unique:users,email',
-            'username' => 'required|string|max:80|unique:users,username',
-            'password' => 'required|string|min:6|confirmed',
-        ]);
+        // ✅ Todas las validaciones están en RegisterClienteRequest.
+        // Los datos ya vienen sanitizados (nombres capitalizados, email en minúscula, CI en mayúscula).
         $rolCliente = Rol::where('nombre', 'cliente')->first();
         if (!$rolCliente) {
             return back()->with('error', 'Error: El rol "cliente" no se encuentra inicializado en la base de datos.');

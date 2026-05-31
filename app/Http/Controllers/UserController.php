@@ -2,10 +2,12 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
+use App\Http\Requests\Admin\StoreUserRequest;
+use App\Http\Requests\Admin\UpdateUserRequest;
 use App\Models\User;
 use App\Models\Persona;
 use App\Models\Rol;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
 
@@ -28,18 +30,9 @@ class UserController extends Controller
         $roles = Rol::all(); 
         return view('admin.usuarios.index', compact('usuarios', 'roles'));
     }
-    public function store(Request $request)
+    public function store(StoreUserRequest $request)
     {
-        $request->validate([
-            'nombre' => 'required|string|max:100',
-            'apellidos' => 'required|string|max:100',
-            'ci' => 'nullable|string|max:20|unique:personas,ci',
-            'telefono' => 'nullable|string|max:20',
-            'rol_id' => 'required|exists:roles,id',
-            'email' => 'required|string|email|max:150|unique:users,email',
-            'username' => 'required|string|max:80|unique:users,username',
-            'password' => 'required|string|min:6',
-        ]);
+        // ✅ Todas las validaciones están en StoreUserRequest (incluyendo contraseña fuerte).
         DB::beginTransaction();
         try {
             $persona = Persona::create($request->only(['nombre', 'apellidos', 'ci', 'telefono']));
@@ -58,19 +51,10 @@ class UserController extends Controller
             return back()->with('error', 'Error al crear usuario: ' . $e->getMessage())->withInput();
         }
     }
-    public function update(Request $request, $id)
+    public function update(UpdateUserRequest $request, $id)
     {
         $user = User::with('persona')->findOrFail($id);
-        $request->validate([
-            'nombre' => 'required|string|max:100',
-            'apellidos' => 'required|string|max:100',
-            'ci' => 'nullable|string|max:20|unique:personas,ci,' . $user->persona->id,
-            'telefono' => 'nullable|string|max:20',
-            'rol_id' => 'required|exists:roles,id',
-            'email' => 'required|string|email|max:150|unique:users,email,' . $user->id,
-            'username' => 'required|string|max:80|unique:users,username,' . $user->id,
-            'password' => 'nullable|string|min:6', // Contraseña opcional al editar
-        ]);
+        // ✅ Todas las validaciones están en UpdateUserRequest.
         DB::beginTransaction();
         try {
             $user->persona->update($request->only(['nombre', 'apellidos', 'ci', 'telefono']));

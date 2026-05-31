@@ -23,7 +23,10 @@ class ProveedorController extends Controller
             'ciudad' => 'nullable|string|max:100',
             'pais' => 'nullable|string|max:80',
         ]);
-        Proveedor::create($request->all());
+        Proveedor::create($request->only([
+            'nombre_empresa', 'telefono', 'email',
+            'contacto_nombre', 'direccion', 'ciudad', 'pais'
+        ]));
         return redirect()->route('proveedores.index')->with('success', 'Proveedor registrado exitosamente.');
     }
     public function update(Request $request, $id)
@@ -38,7 +41,10 @@ class ProveedorController extends Controller
             'ciudad' => 'nullable|string|max:100',
             'pais' => 'nullable|string|max:80',
         ]);
-        $proveedor->update($request->all());
+        $proveedor->update($request->only([
+            'nombre_empresa', 'telefono', 'email',
+            'contacto_nombre', 'direccion', 'ciudad', 'pais'
+        ]));
         return redirect()->route('proveedores.index')->with('success', 'Proveedor actualizado exitosamente.');
     }
     public function destroy($id)
