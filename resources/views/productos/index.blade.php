@@ -374,5 +374,22 @@
         document.getElementById('deleteModal').classList.remove('hidden');
     }
     function closeDeleteModal() { document.getElementById('deleteModal').classList.add('hidden'); }
+
+    // Validación de Video en Frontend antes de enviar el formulario
+    document.getElementById('productoForm').addEventListener('submit', function(e) {
+        const videoInput = document.querySelector('input[name="video"]');
+        if (videoInput && videoInput.files.length > 0) {
+            const file = videoInput.files[0];
+            const fileExtension = file.name.split('.').pop().toLowerCase();
+            const allowedFormats = ['mp4', 'avi', 'mov', 'webm', 'ogg', 'mkv', 'wmv', 'flv', '3gp', 'qt'];
+
+            if (!allowedFormats.includes(fileExtension)) {
+                e.preventDefault();
+                alert('El formato de video no es compatible (usa mp4, avi, mov, webm, etc.).');
+                return false;
+            }
+        }
+        return true;
+    });
 </script>
 @endsection

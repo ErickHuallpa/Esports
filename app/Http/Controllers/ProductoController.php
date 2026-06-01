@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use App\Http\Requests\Admin\StoreProductoRequest;
+use App\Http\Requests\Admin\UpdateProductoRequest;
 use App\Models\Producto;
 use App\Models\ProductoVariante;
 use App\Models\Inventario;
@@ -21,22 +23,20 @@ class ProductoController extends Controller
         return view('productos.index', compact('productos', 'categorias', 'proveedores'));
     }
 
-    public function store(Request $request)
+    public function store(StoreProductoRequest $request)
     {
-        $request->validate([
-            'categoria_id' => 'required|exists:categorias,id',
-            'proveedor_id' => 'required|exists:proveedores,id',
-            'nombre' => 'required|string|max:150',
-            'precio_compra' => 'required|numeric|min:0',
-            'precio_venta' => 'required|numeric|min:0',
-            'imagenes.*' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:10240', 
-            'modelo_3d' => 'nullable|file|max:20480',
-            // AÑADIDO 'webm' A LA LISTA DE EXTENSIONES PERMITIDAS
-            'video' => 'nullable|mimes:mp4,mov,ogg,qt,webm|max:51200', 
-            'variante_talla.*' => 'nullable|string|max:50',
-            'variante_color.*' => 'nullable|string|max:50',
-            'variante_stock.*' => 'required|integer|min:0',
-        ]);
+        // === DEBUG OBLIGATORIO (Descomentar para depuración si es necesario) ===
+        // $file = $request->file('video');
+        // dd([
+        //     'loaded_ini' => php_ini_loaded_file(),
+        //     'file_received' => !is_null($file),
+        //     'file_isValid' => !is_null($file) ? $file->isValid() : false,
+        //     'file_error_code' => !is_null($file) ? $file->getError() : 'No object',
+        //     'file_error_message' => !is_null($file) ? $file->getErrorMessage() : 'No object',
+        //     'upload_max_filesize_ini' => ini_get('upload_max_filesize'),
+        //     'post_max_size_ini' => ini_get('post_max_size'),
+        //     'all' => $request->all()
+        // ]);
 
         DB::beginTransaction();
         try {
@@ -89,23 +89,22 @@ class ProductoController extends Controller
         }
     }
 
-    public function update(Request $request, $id)
+    public function update(UpdateProductoRequest $request, $id)
     {
         $producto = Producto::findOrFail($id);
-        $request->validate([
-            'categoria_id' => 'required|exists:categorias,id',
-            'proveedor_id' => 'required|exists:proveedores,id',
-            'nombre' => 'required|string|max:150',
-            'precio_compra' => 'required|numeric|min:0',
-            'precio_venta' => 'required|numeric|min:0',
-            'imagenes.*' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:10240', 
-            'modelo_3d' => 'nullable|file|max:20480', 
-            // AÑADIDO 'webm' A LA LISTA DE EXTENSIONES PERMITIDAS
-            'video' => 'nullable|mimes:mp4,mov,ogg,qt,webm|max:51200', 
-            'variante_talla.*' => 'nullable|string|max:50',
-            'variante_color.*' => 'nullable|string|max:50',
-            'variante_stock.*' => 'required|integer|min:0',
-        ]);
+
+        // === DEBUG OBLIGATORIO (Descomentar para depuración si es necesario) ===
+        // $file = $request->file('video');
+        // dd([
+        //     'loaded_ini' => php_ini_loaded_file(),
+        //     'file_received' => !is_null($file),
+        //     'file_isValid' => !is_null($file) ? $file->isValid() : false,
+        //     'file_error_code' => !is_null($file) ? $file->getError() : 'No object',
+        //     'file_error_message' => !is_null($file) ? $file->getErrorMessage() : 'No object',
+        //     'upload_max_filesize_ini' => ini_get('upload_max_filesize'),
+        //     'post_max_size_ini' => ini_get('post_max_size'),
+        //     'all' => $request->all()
+        // ]);
 
         DB::beginTransaction();
         try {
