@@ -246,7 +246,7 @@
             <input type="hidden" name="variante_id[]" value="">
             <input type="text" name="variante_talla[]" placeholder="Talla / Medida" class="w-full bg-[#f4f4f4] border-none rounded-lg p-2.5 text-xs focus:ring-2 focus:ring-[#0464a4] text-[#343c4c] font-bold">
             <input type="text" name="variante_color[]" placeholder="Color" class="w-full bg-[#f4f4f4] border-none rounded-lg p-2.5 text-xs focus:ring-2 focus:ring-[#0464a4] text-[#343c4c] font-bold">
-            <input type="number" name="variante_stock[]" placeholder="Stock" required class="w-24 bg-[#f4f4f4] border-none rounded-lg p-2.5 text-xs font-black text-[#0464a4] focus:ring-2 focus:ring-[#0464a4] text-center">
+            <input type="number" name="variante_stock[]" placeholder="Stock" min="0" onkeydown="if(event.key==='-'||event.key==='e'||event.key==='E'||event.key==='+')event.preventDefault();" oninput="if(parseFloat(this.value)<0)this.value='0';" required class="w-24 bg-[#f4f4f4] border-none rounded-lg p-2.5 text-xs font-black text-[#0464a4] focus:ring-2 focus:ring-[#0464a4] text-center">
             <button type="button" onclick="eliminarFila(this)" class="text-[#dc043c] hover:bg-[#dc043c]/10 p-2 rounded-lg font-black text-lg transition-colors">&times;</button>
         </div>`;
         document.getElementById('wrapperFilas').insertAdjacentHTML('beforeend', row);
@@ -305,7 +305,7 @@
                         <input type="hidden" name="variante_id[]" value="${v.id}">
                         <input type="text" name="variante_talla[]" value="${v.talla || ''}" placeholder="Talla / Medida" class="w-full bg-[#f4f4f4] border-none rounded-lg p-2.5 text-xs focus:ring-2 focus:ring-[#0464a4] text-[#343c4c] font-bold">
                         <input type="text" name="variante_color[]" value="${v.color || ''}" placeholder="Color" class="w-full bg-[#f4f4f4] border-none rounded-lg p-2.5 text-xs focus:ring-2 focus:ring-[#0464a4] text-[#343c4c] font-bold">
-                        <input type="number" name="variante_stock[]" value="${v.stock}" placeholder="Stock" required class="w-24 bg-[#f4f4f4] border-none rounded-lg p-2.5 text-xs font-black text-[#0464a4] focus:ring-2 focus:ring-[#0464a4] text-center">
+                        <input type="number" name="variante_stock[]" value="${v.stock}" placeholder="Stock" min="0" onkeydown="if(event.key==='-'||event.key==='e'||event.key==='E'||event.key==='+')event.preventDefault();" oninput="if(parseFloat(this.value)<0)this.value='0';" required class="w-24 bg-[#f4f4f4] border-none rounded-lg p-2.5 text-xs font-black text-[#0464a4] focus:ring-2 focus:ring-[#0464a4] text-center">
                         <button type="button" onclick="eliminarFila(this)" class="text-[#dc043c] hover:bg-[#dc043c]/10 p-2 rounded-lg font-black text-lg transition-colors">&times;</button>
                     </div>`;
                     wrapper.insertAdjacentHTML('beforeend', row);
@@ -375,8 +375,88 @@
     }
     function closeDeleteModal() { document.getElementById('deleteModal').classList.add('hidden'); }
 
-    // Validación de Video en Frontend antes de enviar el formulario
+    // Restringir entrada en tiempo real para el nombre del producto (no permite números ni caracteres especiales)
+    document.getElementById('nombre').addEventListener('input', function(e) {
+        // Reemplaza todo lo que no sea letra, espacio, guion o acento
+        this.value = this.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s\-]/g, '');
+    });
+
+    // Restringir entrada en tiempo real para los precios (no permite signos negativos ni la letra 'e')
+    const inputsPrecios = ['precio_compra', 'precio_venta'];
+    inputsPrecios.forEach(id => {
+        const input = document.getElementById(id);
+        if (input) {
+            input.setAttribute('min', '0');
+            
+            input.addEventListener('keydown', function(e) {
+                if (e.key === '-' || e.key === 'e' || e.key === 'E' || e.key === '+') {
+                    e.preventDefault();
+                }
+            });
+            input.addEventListener('input', function(e) {
+                if (parseFloat(this.value) < 0) {
+                    this.value = '0';
+                }
+            });
+        }
+    });
+
+    // Validación en Frontend antes de enviar el formulario
     document.getElementById('productoForm').addEventListener('submit', function(e) {
+        // 1. Validación de Nombre
+        const nombreInput = document.getElementById('nombre');
+        const nombreVal = nombreInput.value.trim();
+        const regexNombre = /^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s\-]+$/u;
+        
+        if (nombreVal.length < 3) {
+            e.preventDefault();
+            alert('El nombre del producto debe tener al menos 3 caracteres.');
+            nombreInput.focus();
+            return false;
+        }
+        if (!regexNombre.test(nombreVal)) {
+            e.preventDefault();
+            alert('El nombre del producto solo puede contener letras, espacios y guiones. No se permiten números ni caracteres especiales.');
+            nombreInput.focus();
+            return false;
+        }
+
+        // 2. Validación de Precios
+        const precioCompraInput = document.getElementById('precio_compra');
+        const precioVentaInput = document.getElementById('precio_venta');
+        
+        if (parseFloat(precioCompraInput.value) < 0) {
+            e.preventDefault();
+            alert('El costo de compra no puede ser negativo.');
+            precioCompraInput.focus();
+            return false;
+        }
+        if (parseFloat(precioVentaInput.value) < 0) {
+            e.preventDefault();
+            alert('El precio de venta no puede ser negativo.');
+            precioVentaInput.focus();
+            return false;
+        }
+        if (parseFloat(precioVentaInput.value) < parseFloat(precioCompraInput.value)) {
+            e.preventDefault();
+            alert('El precio de venta (PVP) debe ser mayor o igual al costo de compra.');
+            precioVentaInput.focus();
+            return false;
+        }
+        // 2.5 Validación de Marca (no permite solo símbolos o líneas como ------- o ______)
+        const marcaInput = document.getElementById('marca');
+        const marcaVal = marcaInput.value.trim();
+        if (marcaVal !== '') {
+            const regexAlfanumerico = /[\p{L}\p{N}]/u;
+            if (!regexAlfanumerico.test(marcaVal)) {
+                e.preventDefault();
+                alert('La marca de fabricación debe contener letras o números y no puede consistir únicamente en símbolos o líneas (como -------, ______, etc.).');
+                marcaInput.focus();
+                return false;
+            }
+        }
+
+        // 3. Validación de Video
         const videoInput = document.querySelector('input[name="video"]');
         if (videoInput && videoInput.files.length > 0) {
             const file = videoInput.files[0];

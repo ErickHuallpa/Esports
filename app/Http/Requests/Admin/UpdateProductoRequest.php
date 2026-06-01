@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Admin;
 
 use Illuminate\Foundation\Http\FormRequest;
+use App\Rules\NombrePersona;
 
 class UpdateProductoRequest extends FormRequest
 {
@@ -19,15 +20,17 @@ class UpdateProductoRequest extends FormRequest
         return [
             'categoria_id' => 'required|exists:categorias,id',
             'proveedor_id' => 'required|exists:proveedores,id',
-            'nombre' => 'required|string|min:3|max:150|unique:productos,nombre,' . $productoId,
+            'nombre' => ['required', 'string', 'min:3', 'max:150', 'unique:productos,nombre,' . $productoId, new NombrePersona('nombre')],
             'precio_compra' => 'required|numeric|gt:0',
-            'precio_venta' => 'required|numeric|gt:0',
+            'precio_venta' => 'required|numeric|gt:0|gte:precio_compra',
             'imagenes.*' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:10240',
             'modelo_3d' => 'nullable|file|max:20480',
             'video' => 'nullable|file|mimes:mp4,avi,mov,webm,ogg,mkv,wmv,flv,3gp,qt',
             'variante_talla.*' => 'nullable|string|max:50',
             'variante_color.*' => 'nullable|string|max:50',
             'variante_stock.*' => 'required|integer|min:0',
+            'marca' => ['nullable', 'string', 'max:100', 'regex:/^[\p{L}\p{N}\s\-\._\(\)\/]+$/u', 'regex:/[\p{L}\p{N}]/u'],
+            'descripcion' => 'nullable|string|max:1000',
         ];
     }
 
@@ -41,11 +44,15 @@ class UpdateProductoRequest extends FormRequest
             'precio_compra.gt' => 'El precio de compra debe ser un número positivo mayor a 0.',
             'precio_venta.required' => 'El precio de venta es obligatorio.',
             'precio_venta.gt' => 'El precio de venta debe ser un número positivo mayor a 0.',
+            'precio_venta.gte' => 'El precio de venta (PVP) debe ser mayor o igual al costo de compra.',
             'video.uploaded' => 'Error al subir el video. Verifica el archivo.',
             'video.mimes' => 'El formato del video no es compatible (usa mp4, avi, mov, webm, ogg, etc.).',
             'variante_stock.*.required' => 'El stock de la variante es obligatorio.',
             'variante_stock.*.integer' => 'El stock debe ser un número entero.',
             'variante_stock.*.min' => 'El stock no puede ser negativo.',
+            'marca.regex' => 'La marca de fabricación debe contener letras o números y no puede consistir únicamente en símbolos o líneas.',
+            'marca.max' => 'La marca de fabricación no puede superar los 100 caracteres.',
+            'descripcion.max' => 'La descripción funcional no puede superar los 1000 caracteres.',
         ];
     }
 
