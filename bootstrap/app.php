@@ -16,5 +16,10 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        //
+        $exceptions->render(function (\Illuminate\Database\QueryException $e, \Illuminate\Http\Request $request) {
+            // Error code 23503 is for PostgreSQL and 1451 is for MySQL Foreign Key Violations
+            if ($e->getCode() == 23503 || $e->getCode() == 1451) {
+                return redirect()->back()->with('sweet_error', 'No se puede eliminar este registro porque está siendo utilizado por otros módulos del sistema.');
+            }
+        });
     })->create();

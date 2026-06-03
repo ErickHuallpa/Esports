@@ -42,6 +42,43 @@
         main th { background: transparent !important; color: #0464a4 !important; border-bottom: none !important; font-weight: 900; letter-spacing: 1px; }
         button, a.bg-\[\#dc043c\], a.bg-\[\#0464a4\], a.bg-\[\#dcb47c\] { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
         button:hover:not(:disabled), a.bg-\[\#dc043c\]:hover, a.bg-\[\#0464a4\]:hover, a.bg-\[\#dcb47c\]:hover { transform: translateY(-3px); box-shadow: 0 10px 20px -5px rgba(0,0,0,0.2); }
+        
+        /* Mobile Menu Fix for PC without JIT */
+        @media (min-width: 1280px) {
+            #mobileMenu {
+                display: flex !important;
+                flex-direction: row !important;
+                position: static !important;
+                background: transparent !important;
+                padding: 0 !important;
+                box-shadow: none !important;
+                border: none !important;
+            }
+            #mobileMenu > * {
+                margin-top: 0 !important;
+                margin-bottom: 0 !important;
+            }
+            #btn-mobile-menu {
+                display: none !important;
+            }
+        }
+        @media (max-width: 1279px) {
+            #mobileMenu.show-mobile {
+                display: flex !important;
+                flex-direction: column !important;
+                position: absolute !important;
+                top: 100% !important;
+                left: 0 !important;
+                width: 100% !important;
+                background: rgba(52, 60, 76, 0.95) !important;
+                backdrop-filter: blur(16px) !important;
+                padding: 1.5rem !important;
+                border-radius: 0 0 2rem 2rem !important;
+                border-top: 1px solid rgba(255,255,255,0.1) !important;
+                box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5) !important;
+                gap: 1rem !important;
+            }
+        }
     </style>
 </head>
 
@@ -68,7 +105,7 @@
                 </a>
             </div>
 
-            <div class="hidden xl:flex flex-1 justify-center space-x-1 items-center">
+            <div id="mobileMenu" class="hidden xl:flex flex-1 justify-center space-x-1 items-center z-50 transition-all">
                 <a href="{{ route('home') }}#catalogo" class="px-3 py-2 text-[#f4f4f4] hover:text-[#dcb47c] rounded-lg font-bold text-xs 2xl:text-sm transition-colors uppercase tracking-wider whitespace-nowrap">
                     Catálogo
                 </a>
@@ -161,7 +198,10 @@
                 @endauth
             </div>
 
-            <div class="flex items-center space-x-4 flex-shrink-0">
+            <div class="flex items-center space-x-2 md:space-x-4 flex-shrink-0">
+                <button id="btn-mobile-menu" onclick="document.getElementById('mobileMenu').classList.toggle('show-mobile');" class="xl:hidden p-2 text-white bg-white/10 rounded-full hover:bg-[#dc043c] shadow-sm transition border border-white/20">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+                </button>
                 @guest
                     @if(!\App\Models\User::whereHas('rol', function($q){ $q->where('nombre', 'admin'); })->exists())
                         <a href="{{ route('admin.register.form') }}" class="px-4 py-2 text-xs 2xl:text-sm font-black tracking-widest uppercase text-white bg-[#dc043c] rounded-lg hover:bg-[#0464a4] shadow-md animate-pulse transition">
@@ -386,6 +426,20 @@
                     title: 'Contraseña poco segura',
                     text: 'Hemos notado que tu contraseña es muy débil. Te sugerimos cambiarla por una más segura combinando letras, números y símbolos para proteger mejor tu cuenta.',
                     confirmButtonColor: '#dcb47c',
+                    confirmButtonText: 'Entendido'
+                });
+            }
+        });
+        @endif
+
+        @if(session('sweet_error'))
+        document.addEventListener("DOMContentLoaded", function () {
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Acción Denegada',
+                    text: "{{ session('sweet_error') }}",
+                    confirmButtonColor: '#dc043c',
                     confirmButtonText: 'Entendido'
                 });
             }
