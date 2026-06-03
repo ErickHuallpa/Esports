@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="max-w-6xl mx-auto my-6">
+<div class="max-w-[1800px] w-full mx-auto my-4 md:my-8 px-2 md:px-8">
     
     <div class="mb-10 flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4 border-b-2 border-[#f4f4f4] pb-4">
         <div>
@@ -27,6 +27,11 @@
                     <div class="flex flex-col items-center">
                         <span class="text-[10px] font-black text-[#dcb47c] uppercase tracking-widest mb-1">Total Transacción</span>
                         <p class="text-2xl font-black text-[#dc043c] drop-shadow-md bg-white/10 px-4 py-1 rounded-lg">Bs {{ number_format($venta->precio_total, 2) }}</p>
+                        @if($venta->descuento_aplicado > 0)
+                            <p class="text-[10px] font-bold text-white bg-green-500/20 border border-green-500/50 px-2 py-0.5 rounded mt-1 shadow-sm">
+                                CUPÓN APLICADO: -Bs {{ number_format($venta->descuento_aplicado, 2) }}
+                            </p>
+                        @endif
                     </div>
 
                     <div class="flex flex-col items-end space-y-2">
@@ -86,7 +91,14 @@
                                             @if($det->variante->talla) | Talla: <span class="text-[#0464a4]">{{ $det->variante->talla }}</span> @endif
                                             @if($det->variante->color) | Color: <span class="text-[#0464a4]">{{ $det->variante->color }}</span> @endif
                                         </p>
-                                        <p class="text-sm font-black text-[#343c4c]">Bs {{ number_format($det->subtotal, 2) }}</p>
+                                        <div class="flex items-center gap-3">
+                                            <p class="text-sm font-black text-[#343c4c]">Bs {{ number_format($det->subtotal, 2) }}</p>
+                                            @if($det->descuento_unitario > 0)
+                                                <span class="text-[10px] font-black text-white bg-[#dc043c] px-2 py-0.5 rounded shadow-sm">
+                                                    AHORRO: Bs {{ number_format($det->descuento_unitario * $det->cantidad, 2) }}
+                                                </span>
+                                            @endif
+                                        </div>
                                     </div>
                                 </div>
                             @endforeach
@@ -102,23 +114,46 @@
                             @if($venta->orden)
                                 <p class="text-xl font-black text-[#343c4c] uppercase tracking-wide mb-4">{{ $venta->orden->estado_orden }}</p>
                                 
-                                @if($venta->orden->envio)
-                                    <div class="text-xs text-[#343c4c]/80 space-y-2 font-medium">
-                                        <p><strong class="text-[#343c4c] uppercase tracking-wider text-[10px]">Destino:</strong><br> {{ $venta->orden->envio->ciudad_destino }}</p>
-                                        <p><strong class="text-[#343c4c] uppercase tracking-wider text-[10px]">Dirección:</strong><br> {{ $venta->orden->envio->direccion_destino }}</p>
-                                        
-                                        @if($venta->orden->envio->codigo_seguimiento)
-                                            <div class="mt-4 bg-white p-3 rounded-xl border-2 border-dashed border-[#0464a4]/40 text-center shadow-sm">
-                                                <strong class="block text-[9px] font-black uppercase tracking-widest text-[#0464a4] mb-1">Guía / Tracking</strong>
-                                                <span class="text-lg font-black text-[#343c4c]">{{ $venta->orden->envio->codigo_seguimiento }}</span>
-                                            </div>
-                                        @endif
+                                @if(in_array(strtolower($venta->orden->estado_orden), ['entregada', 'completada', 'completada / entregada']))
+                                    <div class="bg-white p-4 rounded-xl border border-[#dcb47c]/50 text-center shadow-sm">
+                                        <span class="text-2xl mb-2 block">⭐</span>
+                                        <p class="text-[11px] text-[#343c4c] font-bold uppercase tracking-wider mb-3">¿Qué te parecieron los productos?</p>
+                                        <a href="{{ route('producto.show', $venta->detalles->first()->variante->producto_id ?? 1) }}#resenas" class="inline-block bg-[#0464a4] hover:bg-[#dc043c] text-white font-black uppercase tracking-widest text-[9px] px-4 py-2 rounded transition-colors shadow-md">
+                                            Agregar Reseña
+                                        </a>
                                     </div>
                                 @else
-                                    <div class="bg-white p-4 rounded-xl border border-[#dcb47c]/50 text-center shadow-sm">
-                                        <span class="text-2xl mb-1 block">🏪</span>
-                                        <p class="text-xs text-[#343c4c] font-bold uppercase tracking-wider">Recojo en Tienda</p>
-                                    </div>
+                                    @if($venta->orden->envio)
+                                        <div class="text-xs text-[#343c4c]/80 space-y-2 font-medium">
+                                            <p><strong class="text-[#343c4c] uppercase tracking-wider text-[10px]">Destino:</strong><br> {{ $venta->orden->envio->ciudad_destino }}</p>
+                                            <p><strong class="text-[#343c4c] uppercase tracking-wider text-[10px]">Dirección:</strong><br> {{ $venta->orden->envio->direccion_destino }}</p>
+                                            
+                                            @if($venta->orden->envio->codigo_seguimiento)
+                                                <div class="mt-4 bg-white p-3 rounded-xl border-2 border-dashed border-[#0464a4]/40 text-center shadow-sm">
+                                                    <strong class="block text-[9px] font-black uppercase tracking-widest text-[#0464a4] mb-1">Guía / Tracking</strong>
+                                                    <span class="text-lg font-black text-[#343c4c]">{{ $venta->orden->envio->codigo_seguimiento }}</span>
+                                                </div>
+                                            @endif
+                                        </div>
+                                    @else
+                                        <div class="bg-white p-4 rounded-xl border border-[#dcb47c]/50 text-center shadow-sm">
+                                            <span class="text-2xl mb-1 block">🏪</span>
+                                            <p class="text-xs text-[#343c4c] font-bold uppercase tracking-wider">Recojo en Tienda</p>
+                                        </div>
+                                    @endif
+
+                                    @if(str_contains(strtolower($venta->orden->estado_orden), 'listo') || str_contains(strtolower($venta->orden->estado_orden), 'llegó') || str_contains(strtolower($venta->orden->estado_orden), 'llego'))
+                                        <div class="mt-4 border-t-2 border-[#f4f4f4] pt-4">
+                                            <form action="{{ route('cliente.pedidos.recibir', $venta->orden->id) }}" method="POST">
+                                                @csrf
+                                                @method('PUT')
+                                                <button type="button" onclick="confirmarRecepcion(this.form)" class="w-full bg-[#0464a4] hover:bg-[#343c4c] text-white font-black uppercase tracking-widest text-[10px] px-4 py-3 rounded-lg shadow-md transition-colors flex items-center justify-center">
+                                                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path></svg>
+                                                    Marcar como Recibido
+                                                </button>
+                                            </form>
+                                        </div>
+                                    @endif
                                 @endif
                             @endif
                         </div>
@@ -135,4 +170,41 @@
         @endforelse
     </div>
 </div>
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+    function confirmarRecepcion(form) {
+        Swal.fire({
+            title: '¿Ya tienes tus productos?',
+            text: "Al confirmar, la orden se marcará como Completada y Entregada.",
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#0464a4',
+            cancelButtonColor: '#343c4c',
+            confirmButtonText: 'Sí, ya lo recibí',
+            cancelButtonText: 'Volver'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                form.submit();
+            }
+        });
+    }
+
+    @if(session('success'))
+        Swal.fire({
+            title: '¡Excelente!',
+            text: '{{ session('success') }}',
+            icon: 'success',
+            confirmButtonColor: '#0464a4'
+        });
+    @endif
+    @if(session('error'))
+        Swal.fire({
+            title: 'Error',
+            text: '{{ session('error') }}',
+            icon: 'error',
+            confirmButtonColor: '#dc043c'
+        });
+    @endif
+</script>
 @endsection

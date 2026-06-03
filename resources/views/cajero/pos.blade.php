@@ -46,37 +46,57 @@
                     </div>
 
                     <!-- Grilla de Productos -->
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[400px] overflow-y-auto pr-2 pb-2 custom-scrollbar" id="catalogo_pos">
-                        @forelse($variantes as $v)
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[440px] overflow-y-auto pr-2 pb-2 custom-scrollbar" id="catalogo_pos">
+                        @php
+                            $agrupados = $variantes->groupBy('producto_id');
+                        @endphp
+
+                        @forelse($agrupados as $prodId => $vars)
                             @php 
-                                $fotos = json_decode($v->producto->imagen_url, true) ?? [];
+                                $producto = $vars->first()->producto;
+                                $fotos = json_decode($producto->imagen_url, true) ?? [];
                                 $portada = count($fotos) > 0 ? $fotos[0] : null;
+                                $precio = $producto->precio_venta;
                             @endphp
                             
-                            <div class="producto-card flex bg-white border-2 border-[#f4f4f4] rounded-xl overflow-hidden hover:border-[#0464a4] hover:shadow-lg transition-all cursor-pointer group relative" 
-                                 data-nombre="{{ strtolower($v->producto->nombre) }}" 
-                                 data-marca="{{ strtolower($v->producto->marca ?? '') }}" 
-                                 data-color="{{ strtolower($v->color ?? '') }}" 
-                                 data-categoria="{{ $v->producto->categoria_id }}"
-                                 onclick="agregarVariantePos('{{ $v->id }}', '{{ addslashes($v->producto->nombre) }}', 'Talla: {{ $v->talla ?? 'N/A' }} | Color: {{ $v->color ?? 'N/A' }}', {{ $v->producto->precio_venta }}, {{ $v->stock }})">
+                            <div class="producto-card flex flex-col bg-white border-2 border-[#f4f4f4] rounded-xl overflow-hidden hover:border-[#0464a4] hover:shadow-lg transition-all group relative" 
+                                 data-nombre="{{ strtolower($producto->nombre) }}" 
+                                 data-marca="{{ strtolower($producto->marca ?? '') }}" 
+                                 data-categoria="{{ $producto->categoria_id }}">
                                  
-                                <div class="w-28 bg-[#f4f4f4] flex-shrink-0 flex items-center justify-center overflow-hidden p-2">
-                                    @if($portada)
-                                        <img src="{{ asset('storage/' . $portada) }}" class="w-full h-full object-contain group-hover:scale-110 transition-transform duration-500 drop-shadow-sm">
-                                    @else
-                                        <svg class="w-8 h-8 text-[#343c4c]/20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-                                    @endif
+                                <div class="flex">
+                                    <div class="w-28 bg-[#f4f4f4] flex-shrink-0 flex items-center justify-center overflow-hidden p-2">
+                                        @if($portada)
+                                            <img src="{{ asset('storage/' . $portada) }}" class="w-full h-full object-contain group-hover:scale-110 transition-transform duration-500 drop-shadow-sm">
+                                        @else
+                                            <svg class="w-8 h-8 text-[#343c4c]/20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                                        @endif
+                                    </div>
+                                    
+                                    <div class="p-3 flex-grow flex flex-col justify-between">
+                                        <div>
+                                            <div class="text-[9px] text-[#dcb47c] font-black uppercase tracking-widest line-clamp-1 mb-0.5">{{ $producto->categoria->nombre ?? 'General' }}</div>
+                                            <h4 class="text-sm font-bold text-[#343c4c] line-clamp-2 leading-tight group-hover:text-[#0464a4] transition-colors" title="{{ $producto->nombre }}">{{ $producto->nombre }}</h4>
+                                        </div>
+                                        <div class="flex justify-between items-end mt-2">
+                                            <span class="text-base font-black text-[#dc043c]">Bs {{ number_format($precio, 2) }}</span>
+                                        </div>
+                                    </div>
                                 </div>
                                 
-                                <div class="p-4 flex-grow flex flex-col justify-between">
-                                    <div>
-                                        <div class="text-[9px] text-[#dcb47c] font-black uppercase tracking-widest line-clamp-1 mb-1">{{ $v->producto->categoria->nombre ?? 'General' }}</div>
-                                        <h4 class="text-sm font-bold text-[#343c4c] line-clamp-2 leading-tight group-hover:text-[#0464a4] transition-colors" title="{{ $v->producto->nombre }}">{{ $v->producto->nombre }}</h4>
-                                        <p class="text-[10px] text-[#343c4c]/60 mt-1.5 font-medium">Talla: <span class="font-black text-[#343c4c]">{{ $v->talla ?? '-' }}</span> | Color: <span class="font-black text-[#343c4c]">{{ $v->color ?? '-' }}</span></p>
-                                    </div>
-                                    <div class="flex justify-between items-end mt-3">
-                                        <span class="text-base font-black text-[#dc043c]">Bs {{ number_format($v->producto->precio_venta, 2) }}</span>
-                                        <span class="text-[9px] font-black uppercase tracking-widest px-2 py-1 bg-[#343c4c] text-white rounded shadow-sm">Stock: {{ $v->stock }}</span>
+                                <div class="px-3 pb-3 pt-1 border-t border-[#f4f4f4] bg-[#f4f4f4]/20">
+                                    <label class="block text-[8px] font-black text-[#343c4c] uppercase tracking-widest mb-1 text-[#0464a4]">Talla / Color a vender:</label>
+                                    <div class="flex space-x-2">
+                                        <select id="select_var_{{ $producto->id }}" class="flex-1 bg-white border border-[#f4f4f4] shadow-sm rounded text-[10px] p-2 focus:ring-1 focus:ring-[#0464a4] font-bold text-[#343c4c] cursor-pointer">
+                                            @foreach($vars as $v)
+                                                <option value="{{ $v->id }}" data-talla="{{ $v->talla }}" data-color="{{ $v->color }}" data-stock="{{ $v->stock }}">
+                                                    {{ $v->talla ?? 'N/A' }} | {{ $v->color ?? 'N/A' }} (Quedan: {{ $v->stock }})
+                                                </option>
+                                            @endforeach
+                                        </select>
+                                        <button type="button" onclick="agregarDesdeSelect({{ $producto->id }}, '{{ addslashes($producto->nombre) }}', {{ $precio }})" class="bg-[#343c4c] hover:bg-[#0464a4] text-white px-3 py-1 rounded text-[10px] font-black uppercase tracking-widest transition-colors shadow-sm flex items-center justify-center">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
+                                        </button>
                                     </div>
                                 </div>
                             </div>
@@ -134,19 +154,19 @@
                             class="w-full bg-[#f4f4f4] border-none rounded-xl p-3 text-sm focus:ring-2 focus:ring-[#0464a4] font-bold text-[#343c4c]">
                     </div>
                     <div>
-                        <label class="block text-[10px] font-black text-[#343c4c] uppercase tracking-widest mb-1.5">Correo Electrónico *</label>
-                        <input type="email" id="email_input" name="email" required placeholder="correo@ejemplo.com" 
+                        <label class="block text-[10px] font-black text-[#343c4c] uppercase tracking-widest mb-1.5">Correo Electrónico <span class="text-[#343c4c]/40 lowercase normal-case text-[9px]">(Opcional si no tiene)</span></label>
+                        <input type="email" id="email_input" name="email" placeholder="correo@ejemplo.com" 
                             class="w-full bg-[#f4f4f4] border-none rounded-xl p-3 text-sm focus:ring-2 focus:ring-[#0464a4] font-bold text-[#343c4c]">
                     </div>
                     <div class="grid grid-cols-2 gap-3">
                         <div>
                             <label class="block text-[10px] font-black text-[#343c4c] uppercase tracking-widest mb-1.5">Nombres *</label>
-                            <input type="text" id="nombre_input" name="nombre" required placeholder="Nombres" 
+                            <input type="text" id="nombre_input" name="nombre" required pattern="[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+" title="Solo letras y espacios" placeholder="Nombres" 
                                 class="w-full bg-[#f4f4f4] border-none rounded-xl p-3 text-sm focus:ring-2 focus:ring-[#0464a4] font-bold text-[#343c4c]">
                         </div>
                         <div>
                             <label class="block text-[10px] font-black text-[#343c4c] uppercase tracking-widest mb-1.5">Apellidos *</label>
-                            <input type="text" id="apellidos_input" name="apellidos" required placeholder="Apellidos" 
+                            <input type="text" id="apellidos_input" name="apellidos" required pattern="[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+" title="Solo letras y espacios" placeholder="Apellidos" 
                                 class="w-full bg-[#f4f4f4] border-none rounded-xl p-3 text-sm focus:ring-2 focus:ring-[#0464a4] font-bold text-[#343c4c]">
                         </div>
                     </div>
@@ -208,10 +228,9 @@
         cards.forEach(card => {
             const nombre = card.getAttribute('data-nombre');
             const marca = card.getAttribute('data-marca');
-            const color = card.getAttribute('data-color');
             const categoria = card.getAttribute('data-categoria');
 
-            const matchText = nombre.includes(text) || marca.includes(text) || color.includes(text);
+            const matchText = nombre.includes(text) || marca.includes(text);
             const matchCat = cat === "" || categoria === cat;
 
             if (matchText && matchCat) {
@@ -284,19 +303,43 @@
     // ==========================================
     let posItems = [];
 
+    function agregarDesdeSelect(prodId, nombre, precio) {
+        const selectElem = document.getElementById(`select_var_${prodId}`);
+        const selectedOpt = selectElem.options[selectElem.selectedIndex];
+        
+        if(!selectedOpt) return;
+
+        const idVar = selectedOpt.value;
+        const talla = selectedOpt.getAttribute('data-talla');
+        const color = selectedOpt.getAttribute('data-color');
+        const stock = selectedOpt.getAttribute('data-stock');
+        
+        const detalleStr = `Talla: ${talla || 'N/A'} | Color: ${color || 'N/A'}`;
+        
+        agregarVariantePos(idVar, nombre, detalleStr, precio, stock);
+    }
+
     function agregarVariantePos(id, nombre, detalle, precio, stockMax) {
         const cantidad = 1;
         const existeIndex = posItems.findIndex(item => item.id === id);
         
         if (existeIndex !== -1) {
             if(posItems[existeIndex].cantidad + cantidad > stockMax) {
-                alert('No puedes exceder el stock disponible en almacén (' + stockMax + ').');
+                if(typeof Swal !== 'undefined') {
+                    Swal.fire({ title: 'Stock Límite', text: 'No puedes exceder el stock disponible en almacén (' + stockMax + ').', icon: 'warning', confirmButtonColor: '#343c4c' });
+                } else {
+                    alert('No puedes exceder el stock disponible en almacén (' + stockMax + ').');
+                }
                 return;
             }
             posItems[existeIndex].cantidad += cantidad;
         } else {
             if(cantidad > stockMax) {
-                alert('Stock agotado en almacén.');
+                if(typeof Swal !== 'undefined') {
+                    Swal.fire({ title: 'Stock Agotado', text: 'Este artículo no tiene stock disponible en almacén.', icon: 'error', confirmButtonColor: '#343c4c' });
+                } else {
+                    alert('Stock agotado en almacén.');
+                }
                 return;
             }
             posItems.push({
@@ -321,7 +364,11 @@
         }
         
         if (nuevaCant > item.stockMax) {
-            alert('Stock máximo en almacén alcanzado (' + item.stockMax + ').');
+            if(typeof Swal !== 'undefined') {
+                Swal.fire({ title: 'Stock Límite', text: 'Stock máximo en almacén alcanzado (' + item.stockMax + ').', icon: 'warning', confirmButtonColor: '#343c4c' });
+            } else {
+                alert('Stock máximo en almacén alcanzado (' + item.stockMax + ').');
+            }
             return;
         }
         
@@ -387,5 +434,79 @@
         btnProcesar.disabled = false;
         btnProcesar.className = "w-full mt-6 bg-[#0464a4] hover:bg-[#343c4c] text-white font-black uppercase tracking-widest py-4 rounded-xl shadow-lg transition-all text-sm transform hover:-translate-y-0.5";
     }
+
+    // ==========================================
+    // INTERCEPCIÓN DEL FORMULARIO Y SWEETALERT
+    // ==========================================
+    document.getElementById('posForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        // Validación extra de carrito vacío
+        if(posItems.length === 0) {
+            if(typeof Swal !== 'undefined') {
+                Swal.fire({
+                    title: 'Carrito Vacío',
+                    text: 'Debes añadir al menos un producto al cobro.',
+                    icon: 'error',
+                    confirmButtonColor: '#343c4c'
+                });
+            } else {
+                alert("Carrito Vacío. Añade un producto.");
+            }
+            return;
+        }
+
+        const ci = document.getElementById('ci_input').value;
+        const nombre = document.getElementById('nombre_input').value;
+        const total = document.getElementById('total_display').innerText;
+        
+        const msg = `¿Confirmas cobrar ${total} al cliente ${nombre} (CI: ${ci})? Esta acción descontará inventario inmediatamente.`;
+
+        if(typeof Swal !== 'undefined') {
+            Swal.fire({
+                title: 'Confirmar Transacción',
+                text: msg,
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#0464a4',
+                cancelButtonColor: '#dc043c',
+                confirmButtonText: 'Sí, procesar venta',
+                cancelButtonText: 'Cancelar'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    Swal.fire({
+                        title: 'Procesando...',
+                        text: 'Registrando venta en el sistema',
+                        allowOutsideClick: false,
+                        didOpen: () => { Swal.showLoading() }
+                    });
+                    this.submit();
+                }
+            });
+        } else {
+            if(confirm(msg)) {
+                this.submit();
+            }
+        }
+    });
+
+    // ==========================================
+    // NOTIFICACIÓN DE CUENTA CREADA AL CAJERO
+    // ==========================================
+    @if(session('cuenta_creada'))
+        document.addEventListener('DOMContentLoaded', function() {
+            if(typeof Swal !== 'undefined') {
+                Swal.fire({
+                    title: '¡Venta y Registro Exitoso!',
+                    html: `{!! session('cuenta_creada') !!}`,
+                    icon: 'success',
+                    confirmButtonColor: '#0464a4',
+                    confirmButtonText: 'Entendido'
+                });
+            } else {
+                alert("Cuenta creada.\n" + `{!! strip_tags(session('cuenta_creada')) !!}`);
+            }
+        });
+    @endif
 </script>
 @endsection

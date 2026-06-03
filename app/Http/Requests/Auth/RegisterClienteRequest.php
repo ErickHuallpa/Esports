@@ -3,153 +3,136 @@
 namespace App\Http\Requests\Auth;
 
 use Illuminate\Foundation\Http\FormRequest;
-use App\Rules\NombrePersona;
-use App\Rules\PasswordSegura;
-use App\Rules\CarnetIdentidadBolivia;
-use App\Rules\TelefonoBolivia;
+use Illuminate\Validation\Rules\Password;
 
-/**
- * FORM REQUEST: RegisterClienteRequest
- *
- * Centraliza y refuerza todas las validaciones del registro público de clientes.
- * Reemplaza el `$request->validate()` directo en ClienteController.
- *
- * Aplica: Validaciones de backend OBLIGATORIAS (independiente del frontend).
- */
 class RegisterClienteRequest extends FormRequest
 {
-    public function authorize(): bool
+    /**
+     * Determina si el usuario está autorizado a realizar esta petición.
+     */
+    public function authorize()
     {
-        // Solo usuarios NO autenticados pueden registrarse
-        return !auth()->check();
+        return true; 
     }
 
-    public function rules(): array
+    /**
+     * Sobrescribe el comportamiento de validación fallida
+     * para mantener las contraseñas en el formulario.
+     */
+    protected function failedValidation(\Illuminate\Contracts\Validation\Validator $validator)
+    {
+        $response = redirect()
+            ->back()
+            ->withInput($this->all())
+            ->withErrors($validator);
+
+        throw new \Illuminate\Validation\ValidationException($validator, $response);
+    }
+
+    /**
+     * Sanitiza y prepara los datos ANTES de validarlos.
+     */
+    protected function prepareForValidation()
+    {
+        $this->merge([
+            'nombre' => ucwords(strtolower(trim($this->nombre))),
+            'apellidos' => ucwords(strtolower(trim($this->apellidos))),
+            'email' => strtolower(trim($this->email)),
+            'ci' => strtoupper(trim($this->ci)),
+            'username' => trim($this->username),
+            'telefono' => $this->telefono ? trim($this->telefono) : null,
+        ]);
+    }
+
+    /**
+     * Reglas de validación estrictas.
+     */
+    public function rules()
     {
         return [
-            // ── NOMBRES ──────────────────────────────────────────────────────
-            // Solo letras, mínimo 2 chars, sin números ni símbolos
-            'nombre' => [
-                'required',
-                'string',
-                'min:2',
-                'max:100',
-                new NombrePersona('nombre'),
-            ],
-
-            // ── APELLIDOS ────────────────────────────────────────────────────
-            'apellidos' => [
-                'required',
-                'string',
-                'min:2',
-                'max:100',
-                new NombrePersona('apellido'),
-            ],
-
-            // ── CARNET DE IDENTIDAD ──────────────────────────────────────────
-            // Formato boliviano: 5-8 dígitos + extensión opcional (LP, CB, etc.)
-            'ci' => [
-                'nullable',
-                'string',
-                'max:20',
-                new CarnetIdentidadBolivia(),
-                'unique:personas,ci',
-            ],
-
-            // ── TELÉFONO ─────────────────────────────────────────────────────
-            // Exactamente 8 dígitos, prefijo boliviano válido
-            'telefono' => [
-                'nullable',
-                'string',
-                new TelefonoBolivia(),
-            ],
-
-            // ── DIRECCIÓN ────────────────────────────────────────────────────
-            'direccion' => [
-                'nullable',
-                'string',
-                'max:255',
-            ],
-
-            // ── USERNAME ──────────────────────────────────────────────────────
-            // Solo alfanumérico + guión bajo, sin espacios
             'username' => [
                 'required',
                 'string',
                 'min:4',
                 'max:80',
-                'regex:/^[a-zA-Z0-9_]+$/',
-                'unique:users,username',
+                'regex:/^[a-zA-Z0-9_]+$/', 
+                'unique:users,username',   
             ],
-
-            // ── EMAIL ────────────────────────────────────────────────────────
-            // Validación estricta: requiere dominio con TLD real (texto@dominio.com)
+            'nombre' => [
+                'required',
+                'string',
+                'min:2',
+                'max:100',
+                'regex:/^[\pL\s\-]+$/u', 
+            ],
+            'apellidos' => [
+                'required',
+                'string',
+                'min:2',
+                'max:100',
+                'regex:/^[\pL\s\-]+$/u', 
+            ],
+            'ci' => [
+                'required',
+                'string',
+                'min:5',
+                'max:20',
+                'regex:/^[0-9]{5,10}([- ][A-Z0-9]{1,4})?$/', 
+                'unique:personas,ci', 
+            ],
+            'telefono' => [
+                'nullable', 
+                'string',
+                'size:8',
+                'regex:/^[2367][0-9]{7}$/', 
+                'unique:personas,telefono',
+            ],
             'email' => [
                 'required',
                 'string',
+                'email:rfc,dns', 
                 'max:150',
-                'regex:/^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$/',
                 'unique:users,email',
             ],
-
-            // ── CONTRASEÑA ───────────────────────────────────────────────────
-            // Mínimo 8 chars + mayúscula + minúscula + número + especial
             'password' => [
                 'required',
                 'string',
-                'confirmed',    // Verifica que coincida con password_confirmation
-                new PasswordSegura(),
+                'min:6',
+                'confirmed', 
             ],
         ];
     }
 
     /**
-     * Mensajes de error en español, claros y orientados al usuario boliviano.
+     * Mensajes de error en español amigables.
      */
-    public function messages(): array
+    public function messages()
     {
         return [
-            'nombre.required'      => 'El nombre es obligatorio.',
-            'nombre.min'           => 'El nombre debe tener al menos 2 letras.',
-            'nombre.max'           => 'El nombre no puede superar los 100 caracteres.',
-
-            'apellidos.required'   => 'Los apellidos son obligatorios.',
-            'apellidos.min'        => 'Los apellidos deben tener al menos 2 letras.',
-            'apellidos.max'        => 'Los apellidos no pueden superar los 100 caracteres.',
-
-            'ci.unique'            => 'Este número de C.I. ya está registrado en el sistema.',
-
-            'username.required'    => 'El nombre de usuario es obligatorio.',
-            'username.min'         => 'El usuario debe tener al menos 4 caracteres.',
-            'username.max'         => 'El usuario no puede superar los 80 caracteres.',
-            'username.regex'       => 'El usuario solo puede contener letras, números y guión bajo (_). Sin espacios.',
-            'username.unique'      => 'Este nombre de usuario ya está en uso. Prueba con uno diferente.',
-
-            'email.required'       => 'El correo electrónico es obligatorio.',
-            'email.regex'          => 'El correo electrónico no tiene un formato válido. Ejemplo: nombre@dominio.com',
-            'email.unique'         => 'Este correo ya está registrado. ¿Ya tienes una cuenta?',
-            'email.max'            => 'El correo electrónico no puede superar los 150 caracteres.',
-
-            'password.required'    => 'La contraseña es obligatoria.',
-            'password.confirmed'   => 'Las contraseñas no coinciden. Por favor, verifícalas.',
+            'username.required' => 'El nombre de usuario es obligatorio.',
+            'username.regex' => 'El usuario solo puede contener letras, números y guiones bajos (_).',
+            'username.unique' => 'Este nombre de usuario ya está registrado, elige otro.',
+            
+            'nombre.required' => 'El nombre es obligatorio.',
+            'nombre.regex' => 'El nombre no puede contener números ni caracteres especiales.',
+            
+            'apellidos.required' => 'Los apellidos son obligatorios.',
+            'apellidos.regex' => 'Los apellidos no pueden contener números ni caracteres especiales.',
+            
+            'ci.required' => 'El Carnet de Identidad (C.I.) es obligatorio.',
+            'ci.regex' => 'El formato del C.I. no es válido (Ej: 1234567 o 1234567 LP).',
+            'ci.unique' => 'Este C.I. ya se encuentra registrado en el sistema.',
+            
+            'telefono.size' => 'El teléfono debe tener exactamente 8 dígitos.',
+            'telefono.regex' => 'El teléfono debe empezar con 2, 3, 6 o 7 (formato inválido).',
+            'telefono.unique' => 'Este teléfono ya ha sido registrado.',
+            
+            'email.required' => 'El correo electrónico es obligatorio.',
+            'email.email' => 'Debes proporcionar un correo electrónico válido y de un dominio real.',
+            'email.unique' => 'Este correo electrónico ya está en uso. Si es tuyo, inicia sesión.',
+            
+            'password.required' => 'La contraseña es obligatoria.',
+            'password.confirmed' => 'Las contraseñas no coinciden. Por favor, verifica.',
         ];
-    }
-
-    /**
-     * Sanitización antes de validar: capitaliza nombres, normaliza email.
-     */
-    protected function prepareForValidation(): void
-    {
-        $this->merge([
-            // Capitaliza primera letra de cada palabra en nombre y apellidos
-            'nombre'    => $this->nombre ? mb_convert_case(mb_strtolower(trim($this->nombre)), MB_CASE_TITLE, 'UTF-8') : null,
-            'apellidos' => $this->apellidos ? mb_convert_case(mb_strtolower(trim($this->apellidos)), MB_CASE_TITLE, 'UTF-8') : null,
-            // Normaliza email a minúsculas
-            'email'     => $this->email ? mb_strtolower(trim($this->email)) : null,
-            // Normaliza CI a mayúsculas y sin espacios extremos
-            'ci'        => $this->ci ? strtoupper(trim($this->ci)) : null,
-            // Normaliza username a minúsculas
-            'username'  => $this->username ? mb_strtolower(trim($this->username)) : null,
-        ]);
     }
 }

@@ -22,10 +22,10 @@
             </a>
         </div>
 
-        <div class="bg-white rounded-3xl shadow-xl border border-[#343c4c]/10 overflow-hidden mb-10">
+        <div class="bg-white/90 backdrop-blur-xl rounded-[2.5rem] shadow-2xl border border-white/50 overflow-hidden mb-10">
             <div class="flex flex-col lg:flex-row">
                 
-                <div class="w-full lg:w-5/12 xl:w-1/2 p-8 lg:p-12 flex flex-col bg-white relative z-10 order-2 lg:order-1">
+                <div class="w-full lg:w-5/12 xl:w-1/2 p-8 lg:p-12 flex flex-col relative z-10 order-2 lg:order-1">
                     
                     <div class="mb-8">
                         <span class="inline-block px-3 py-1 bg-[#dcb47c]/20 text-[#343c4c] text-[10px] font-black uppercase tracking-widest rounded-md mb-3 border border-[#dcb47c]/50">
@@ -154,7 +154,7 @@
             </div>
         </div>
 
-        <div class="bg-white rounded-3xl shadow-sm border border-[#343c4c]/10 p-8 md:p-12 mb-10 max-w-7xl mx-auto relative z-10">
+        <div class="bg-white/90 backdrop-blur-xl rounded-[2.5rem] shadow-2xl border border-white/50 p-8 md:p-12 mb-10 max-w-7xl mx-auto relative z-10">
             <div class="flex items-center mb-6 border-b-2 border-[#f4f4f4] pb-4">
                 <svg class="w-8 h-8 mr-3 text-[#0464a4]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                 <h3 class="text-2xl font-black text-[#343c4c] uppercase tracking-tight">Detalles del Producto</h3>
@@ -169,7 +169,7 @@
             </div>
         </div>
 
-        <div class="bg-white rounded-3xl shadow-sm border border-[#343c4c]/10 p-8 md:p-12 mb-10 max-w-7xl mx-auto relative z-10">
+        <div class="bg-white/90 backdrop-blur-xl rounded-[2.5rem] shadow-2xl border border-white/50 p-8 md:p-12 mb-10 max-w-7xl mx-auto relative z-10">
             <div class="flex items-center mb-8 border-b-2 border-[#f4f4f4] pb-4">
                 <svg class="w-8 h-8 mr-3 text-[#dcb47c]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path></svg>
                 <h3 class="text-2xl font-black text-[#343c4c] uppercase tracking-tight">Opiniones de la Comunidad</h3>

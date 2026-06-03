@@ -9,6 +9,7 @@ use App\Models\Rol;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class AdminController extends Controller
 {
@@ -55,5 +56,19 @@ class AdminController extends Controller
             DB::rollBack();
             return back()->with('error', 'Ocurrió un error al configurar el administrador: ' . $e->getMessage());
         }
+    }
+
+    public function manual()
+    {
+        abort_if(auth()->user()->rol->nombre !== 'admin', 403, 'No tienes permisos para ver esta página.');
+        return view('admin.manual');
+    }
+
+    public function descargarManual()
+    {
+        abort_if(auth()->user()->rol->nombre !== 'admin', 403, 'No tienes permisos para ver esta página.');
+        
+        $pdf = Pdf::loadView('admin.manual_pdf')->setPaper('letter', 'portrait');
+        return $pdf->download('Manual_Usuario_Master_ESports.pdf');
     }
 }

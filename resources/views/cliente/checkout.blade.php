@@ -1,6 +1,8 @@
 @extends('layouts.app')
 
 @section('content')
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <div class="relative w-full min-h-screen pb-20 overflow-hidden">
     
     <div class="absolute inset-x-0 bottom-0 w-full h-[250px] md:h-[400px] pointer-events-none z-0" 
@@ -22,7 +24,7 @@
             </a>
         </div>
 
-        <form action="{{ route('checkout.store') }}" method="POST" enctype="multipart/form-data">
+        <form id="checkoutForm" action="{{ route('checkout.store') }}" method="POST" enctype="multipart/form-data">
             @csrf
 
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -51,18 +53,29 @@
                                 <div class="md:col-span-2">
                                     <div class="bg-[#0464a4]/5 border border-[#0464a4]/20 p-5 rounded-2xl flex items-start space-x-4 shadow-sm">
                                         <span class="text-2xl drop-shadow-sm">🛵</span>
-                                        <p class="text-xs text-[#0464a4] font-bold leading-relaxed pt-1">Se añadirá un recargo fijo de Bs 5.00 al total de tu compra por el servicio de entrega dentro de la ciudad de Potosí.</p>
+                                        <p class="text-xs text-[#0464a4] font-bold leading-relaxed pt-1">Se añadirá un recargo fijo de Bs 5.00 al total de tu compra por el servicio de entrega dentro de la ciudad de Potosí. Ubica el punto de entrega en el mapa.</p>
                                     </div>
                                     <input type="hidden" name="ciudad_delivery" value="Potosí">
                                 </div>
-                                <div>
-                                    <label class="block text-[10px] font-black text-[#343c4c] uppercase tracking-widest mb-1.5">Zona / Barrio *</label>
-                                    <input type="text" name="zona_destino" id="zona_destino" value="{{ old('zona_destino') }}" placeholder="Ej: San Clemente" 
-                                        class="w-full bg-white border-2 border-[#f4f4f4] rounded-xl p-3.5 text-sm focus:border-[#0464a4] focus:ring-0 font-bold text-[#343c4c] transition-colors shadow-sm">
+                                <div class="md:col-span-2">
+                                    <div class="flex justify-between items-end mb-2">
+                                        <label class="block text-[10px] font-black text-[#343c4c] uppercase tracking-widest">Selecciona tu Ubicación en el Mapa *</label>
+                                        <button type="button" onclick="usarUbicacionActual()" class="text-[10px] font-bold text-white bg-[#0464a4] px-3 py-1.5 rounded-lg flex items-center shadow-sm hover:bg-[#343c4c] transition">
+                                            📍 Usar mi ubicación actual
+                                        </button>
+                                    </div>
+                                    <div id="mapaDelivery" class="w-full h-64 rounded-xl border-2 border-[#f4f4f4] z-0 relative"></div>
+                                    <p class="text-xs text-gray-500 mt-1">Puedes arrastrar el marcador rojo a tu ubicación exacta.</p>
                                 </div>
                                 <div class="md:col-span-2">
-                                    <label class="block text-[10px] font-black text-[#343c4c] uppercase tracking-widest mb-1.5">Dirección Exacta de tu Casa *</label>
-                                    <textarea name="direccion_delivery" id="direccion_delivery" rows="2" placeholder="Ej: Calle Chayanta Nro 45, puerta azul..." 
+                                    <label class="block text-[10px] font-black text-[#343c4c] uppercase tracking-widest mb-1.5">Zona / Barrio (Puedes escribir o usar el mapa) *</label>
+                                    <input type="text" name="zona_destino" id="zona_destino" required value="{{ old('zona_destino') }}" placeholder="Ej: San Clemente" 
+                                        class="w-full bg-white border-2 border-[#f4f4f4] rounded-xl p-3.5 text-sm focus:border-[#0464a4] focus:ring-0 font-bold text-[#343c4c] transition-colors shadow-sm">
+                                    <input type="hidden" name="coordenadas" id="coordenadas" value="-19.5836,-65.7531">
+                                </div>
+                                <div class="md:col-span-2">
+                                    <label class="block text-[10px] font-black text-[#343c4c] uppercase tracking-widest mb-1.5">Referencias (Nro de casa, color de puerta, etc) *</label>
+                                    <textarea name="direccion_delivery" id="direccion_delivery" rows="2" placeholder="Ej: Casa blanca de 2 pisos, portón negro, timbre derecho..." 
                                         class="w-full bg-white border-2 border-[#f4f4f4] rounded-xl p-3.5 text-sm focus:border-[#0464a4] focus:ring-0 font-bold text-[#343c4c] resize-none transition-colors shadow-sm">{{ old('direccion_delivery') }}</textarea>
                                 </div>
                             </div>
@@ -81,10 +94,26 @@
                                     </select>
                                 </div>
 
+
                                 <div>
-                                    <label class="block text-[10px] font-black text-[#343c4c] uppercase tracking-widest mb-1.5">Ciudad / Municipio de Destino *</label>
-                                    <input type="text" name="ciudad_encomienda" id="ciudad_encomienda" value="{{ old('ciudad_encomienda') }}" placeholder="Ej: Betanzos, Tupiza, Oruro..." 
-                                        class="w-full bg-white border-2 border-[#f4f4f4] rounded-xl p-3.5 text-sm focus:border-[#0464a4] focus:ring-0 font-bold text-[#343c4c] transition-colors shadow-sm">
+                                    <label class="block text-[10px] font-black text-[#343c4c] uppercase tracking-widest mb-1.5">Ciudad de Destino en Bolivia *</label>
+                                    <select name="ciudad_encomienda" id="ciudad_encomienda" class="w-full bg-white border-2 border-[#f4f4f4] rounded-xl p-3.5 text-sm focus:border-[#0464a4] focus:ring-0 font-bold text-[#343c4c] transition-colors shadow-sm">
+                                        <option value="">Seleccione una ciudad...</option>
+                                        <option value="La Paz">La Paz</option>
+                                        <option value="El Alto">El Alto</option>
+                                        <option value="Cochabamba">Cochabamba</option>
+                                        <option value="Santa Cruz">Santa Cruz de la Sierra</option>
+                                        <option value="Oruro">Oruro</option>
+                                        <option value="Sucre">Sucre</option>
+                                        <option value="Tarija">Tarija</option>
+                                        <option value="Beni">Trinidad (Beni)</option>
+                                        <option value="Pando">Cobija (Pando)</option>
+                                        <option value="Tupiza">Tupiza</option>
+                                        <option value="Villazón">Villazón</option>
+                                        <option value="Uyuni">Uyuni</option>
+                                        <option value="Llallagua">Llallagua</option>
+                                    </select>
+                                    <p class="text-[10px] font-bold text-[#dc043c] mt-2 uppercase">⚠️ Nota: Solo se envía a las ciudades mencionadas. El pago es estrictamente mediante QR o Depósito Interbancario.</p>
                                 </div>
                             </div>
                         </div>
@@ -146,9 +175,20 @@
                             <div class="divide-y divide-[#f4f4f4] max-h-60 overflow-y-auto mb-8 pr-2 custom-scrollbar">
                                 @foreach($cartItems as $item)
                                     <div class="py-4 flex justify-between items-center text-sm group">
-                                        <div class="pr-4">
-                                            <p class="font-black text-[#343c4c] line-clamp-2 uppercase leading-tight group-hover:text-[#0464a4] transition-colors">{{ $item['nombre'] }}</p>
-                                            <span class="text-[10px] font-black text-[#dcb47c] tracking-widest mt-1 block">Cant: {{ $item['cantidad'] }} @if($item['talla'])| Talla: {{ $item['talla'] }}@endif</span>
+                                        <div class="pr-4 flex items-center">
+                                            <div class="w-12 h-12 bg-white rounded-lg flex-shrink-0 mr-3 border border-gray-100 overflow-hidden shadow-sm">
+                                                @if($item['imagen_url'])
+                                                    <img src="{{ asset('storage/' . $item['imagen_url']) }}" class="w-full h-full object-cover">
+                                                @else
+                                                    <div class="w-full h-full flex items-center justify-center bg-gray-50 text-[#343c4c]/20">
+                                                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                                                    </div>
+                                                @endif
+                                            </div>
+                                            <div>
+                                                <p class="font-black text-[#343c4c] line-clamp-2 uppercase leading-tight group-hover:text-[#0464a4] transition-colors">{{ $item['nombre'] }}</p>
+                                                <span class="text-[10px] font-black text-[#dcb47c] tracking-widest mt-1 block">Cant: {{ $item['cantidad'] }} @if($item['talla'])| Talla: {{ $item['talla'] }}@endif</span>
+                                            </div>
                                         </div>
                                         <span class="font-black text-[#0464a4] whitespace-nowrap text-lg">Bs {{ number_format($item['precio'] * $item['cantidad'], 2) }}</span>
                                     </div>
@@ -281,6 +321,78 @@
         }
     }
 
+    let map;
+    let marker;
+
+    function initMap() {
+        if (!map) {
+            // Coordenadas centrales de Potosí por defecto
+            map = L.map('mapaDelivery').setView([-19.5836, -65.7531], 14);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; OpenStreetMap contributors'
+            }).addTo(map);
+
+            marker = L.marker([-19.5836, -65.7531], {draggable: true}).addTo(map);
+            
+            // Al terminar de arrastrar el pin, obtener nombre de la zona
+            marker.on('dragend', function(e) {
+                const position = marker.getLatLng();
+                document.getElementById('coordenadas').value = position.lat + ',' + position.lng;
+                obtenerNombreZona(position.lat, position.lng);
+            });
+            
+            // Al hacer clic en el mapa, mover pin
+            map.on('click', function(e) {
+                marker.setLatLng(e.latlng);
+                document.getElementById('coordenadas').value = e.latlng.lat + ',' + e.latlng.lng;
+                obtenerNombreZona(e.latlng.lat, e.latlng.lng);
+            });
+        }
+    }
+
+    function usarUbicacionActual() {
+        if (navigator.geolocation) {
+            Swal.fire({title: 'Ubicando...', text: 'Obteniendo tu ubicación actual', allowOutsideClick: false, didOpen: () => { Swal.showLoading(); }});
+            navigator.geolocation.getCurrentPosition(
+                function(position) {
+                    const lat = position.coords.latitude;
+                    const lng = position.coords.longitude;
+                    if(map && marker) {
+                        map.setView([lat, lng], 16);
+                        marker.setLatLng([lat, lng]);
+                        document.getElementById('coordenadas').value = lat + ',' + lng;
+                        obtenerNombreZona(lat, lng);
+                        Swal.close();
+                    }
+                },
+                function(error) {
+                    Swal.fire('Error', 'No pudimos obtener tu ubicación. Por favor mueve el marcador manualmente.', 'error');
+                }
+            );
+        } else {
+            alert("Tu navegador no soporta geolocalización.");
+        }
+    }
+
+    async function obtenerNombreZona(lat, lng) {
+        try {
+            const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`);
+            const data = await res.json();
+            if(data && data.address) {
+                // Intentar sacar el barrio o suburbio
+                const zona = data.address.neighbourhood || data.address.suburb || data.address.road || data.address.city || 'Potosí';
+                if(zona) {
+                    document.getElementById('zona_destino').value = zona;
+                }
+            } else {
+                document.getElementById('zona_destino').value = 'Ubicación seleccionada en mapa';
+            }
+        } catch(e) {
+            console.error("Error al obtener zona:", e);
+            document.getElementById('zona_destino').value = 'Ubicación seleccionada en mapa';
+        }
+    }
+
     function alternarLogistica() {
         const metodo = document.getElementById('metodo_entrega').value;
         const panelDelivery = document.getElementById('campos_delivery');
@@ -310,6 +422,8 @@
             direccionDelivery.required = true;
             ciudadEncomienda.required = false;
             tarifaAgregada = 5;
+            // Inicializar mapa si no se hizo
+            setTimeout(initMap, 200);
         } else if (metodo === 'envio') {
             panelDelivery.classList.add('hidden');
             panelDelivery.classList.remove('grid');
@@ -325,6 +439,26 @@
                 tarifaAgregada = 0;
             }
         }
+
+        // Bloquear opción de Efectivo si es envío por encomienda
+        const radiosPago = document.querySelectorAll('input[name="tipo_pago_id"]');
+        radiosPago.forEach(radio => {
+            if (metodo === 'envio' && radio.dataset.nombre.toLowerCase() === 'efectivo') {
+                radio.disabled = true;
+                radio.parentElement.classList.add('opacity-50', 'pointer-events-none', 'grayscale');
+                if (radio.checked) {
+                    radio.checked = false;
+                    const qrRadio = Array.from(radiosPago).find(r => r.dataset.nombre.toLowerCase() === 'qr');
+                    if(qrRadio) {
+                        qrRadio.checked = true;
+                        alternarPasarela(qrRadio.dataset.nombre);
+                    }
+                }
+            } else {
+                radio.disabled = false;
+                radio.parentElement.classList.remove('opacity-50', 'pointer-events-none', 'grayscale');
+            }
+        });
 
         document.getElementById('costo_envio_display').innerText = `Bs ${tarifaAgregada.toFixed(2)}`;
         const totalFinal = subtotalBase - montoDescuentoActivo + tarifaAgregada;
@@ -350,6 +484,84 @@
         if (checkedRadio) {
             alternarPasarela(checkedRadio.dataset.nombre);
         }
+
+        const form = document.getElementById('checkoutForm');
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const checkedRadio = document.querySelector('input[name="tipo_pago_id"]:checked');
+            
+            if(checkedRadio && checkedRadio.dataset.nombre.toLowerCase() === 'qr') {
+                const totalText = document.getElementById('total_final_display').innerText;
+                Swal.fire({
+                    title: '¿Confirmar Pago QR?',
+                    html: `Revisamos que subiste tu comprobante.<br><br><b>Monto exacto a transferir:</b> <span class="text-2xl text-red-600 font-black">${totalText}</span><br><br>¿Confirmas que realizaste la transferencia por este monto exacto?`,
+                    icon: 'question',
+                    showCancelButton: true,
+                    confirmButtonColor: '#dc043c',
+                    cancelButtonColor: '#343c4c',
+                    confirmButtonText: 'Sí, enviar comprobante',
+                    cancelButtonText: 'Revisar de nuevo'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        procesarFormularioAJAX(form);
+                    }
+                });
+            } else {
+                procesarFormularioAJAX(form);
+            }
+        });
     });
+
+    function procesarFormularioAJAX(form) {
+        const btn = form.querySelector('button[type="submit"]');
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '<span class="relative flex items-center justify-center text-sm drop-shadow-md"><svg class="w-5 h-5 mr-3 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg> Procesando...</span>';
+        btn.disabled = true;
+
+        const formData = new FormData(form);
+        fetch(form.action, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json'
+            }
+        })
+        .then(async response => {
+            const data = await response.json().catch(() => ({}));
+            if (response.ok) {
+                if (data.success) {
+                    Swal.fire({
+                        title: '¡Éxito!',
+                        text: data.message,
+                        icon: 'success',
+                        allowOutsideClick: false,
+                        confirmButtonColor: '#0464a4'
+                    }).then(() => {
+                        window.location.href = data.redirect || '/';
+                    });
+                } else {
+                    throw new Error(data.message || 'Error al procesar la orden');
+                }
+            } else if (response.status === 422) {
+                let erroresHTML = Object.values(data.errors).flat().map(err => `<li>${err}</li>`).join('');
+                Swal.fire({
+                    title: 'Por favor revisa los datos',
+                    html: `<ul class="text-left text-sm text-[#dc043c] list-disc pl-5 space-y-1">${erroresHTML}</ul>`,
+                    icon: 'warning',
+                    confirmButtonColor: '#343c4c'
+                });
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            } else {
+                throw new Error(data.message || 'Error en el servidor');
+            }
+        })
+        .catch(error => {
+            Swal.fire('Error', error.message, 'error');
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+        });
+    }
 </script>
 @endsection

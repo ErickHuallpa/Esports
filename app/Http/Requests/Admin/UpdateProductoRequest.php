@@ -20,9 +20,9 @@ class UpdateProductoRequest extends FormRequest
         return [
             'categoria_id' => 'required|exists:categorias,id',
             'proveedor_id' => 'required|exists:proveedores,id',
-            'nombre' => ['required', 'string', 'min:3', 'max:150', 'unique:productos,nombre,' . $productoId, new NombrePersona('nombre')],
-            'precio_compra' => 'required|numeric|gt:0',
-            'precio_venta' => 'required|numeric|gt:0|gte:precio_compra',
+            'nombre' => ['required', 'string', 'min:3', 'max:150', 'unique:productos,nombre,' . $productoId, 'regex:/^[\p{L}\p{N}\s\-\._\(\)\/]+$/u', 'regex:/[\p{L}\p{N}]/u'],
+            'precio_compra' => 'required|numeric|gt:0|max:100000',
+            'precio_venta' => 'required|numeric|gt:0|gte:precio_compra|max:100000',
             'imagenes.*' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:10240',
             'modelo_3d' => 'nullable|file|max:20480',
             'video' => 'nullable|file|mimes:mp4,avi,mov,webm,ogg,mkv,wmv,flv,3gp,qt',

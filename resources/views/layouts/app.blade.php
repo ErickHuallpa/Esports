@@ -7,26 +7,57 @@
     <title>E-Sports Store</title>
     <link rel="icon" href="{{ asset('logo/logo.ico') }}" type="image/x-icon">
     @vite('resources/css/app.css')
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;700;900&display=swap" rel="stylesheet">
     <style>
         /* Transiciones suaves para los menús desplegables */
         .group:hover .group-hover\:visible { visibility: visible; }
         .group:hover .group-hover\:opacity-100 { opacity: 1; }
         .group:hover .group-hover\:translate-y-0 { transform: translateY(0); }
+        
+        /* CSS Global: Modern Glass & Floating */
+        body { 
+            font-family: 'Outfit', sans-serif !important; 
+            background: linear-gradient(135deg, #f4f4f4 0%, #e2e8f0 100%); 
+            background-attachment: fixed; 
+        }
+        main .bg-white { 
+            border-radius: 1.5rem !important; 
+            box-shadow: 0 25px 50px -12px rgba(4, 100, 164, 0.15) !important; 
+            border: 1px solid rgba(255, 255, 255, 0.6) !important; 
+            background: rgba(255, 255, 255, 0.9) !important;
+            backdrop-filter: blur(10px); 
+        }
+        main table { border-collapse: separate !important; border-spacing: 0 8px !important; }
+        main tbody tr { 
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); 
+            border-radius: 1rem; 
+            background: white !important; 
+            transition: all 0.3s ease; 
+        }
+        main tbody tr:hover { transform: translateY(-3px) scale(1.01); box-shadow: 0 10px 15px -3px rgba(4, 100, 164, 0.1); }
+        main td { border: none !important; }
+        main td:first-child { border-top-left-radius: 1rem; border-bottom-left-radius: 1rem; }
+        main td:last-child { border-top-right-radius: 1rem; border-bottom-right-radius: 1rem; }
+        main th { background: transparent !important; color: #0464a4 !important; border-bottom: none !important; font-weight: 900; letter-spacing: 1px; }
+        button, a.bg-\[\#dc043c\], a.bg-\[\#0464a4\], a.bg-\[\#dcb47c\] { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        button:hover:not(:disabled), a.bg-\[\#dc043c\]:hover, a.bg-\[\#0464a4\]:hover, a.bg-\[\#dcb47c\]:hover { transform: translateY(-3px); box-shadow: 0 10px 20px -5px rgba(0,0,0,0.2); }
     </style>
 </head>
 
-<body class="bg-[#f4f4f4] text-[#343c4c] font-sans antialiased flex flex-col min-h-screen relative overflow-x-hidden">
+<body class="text-[#343c4c] antialiased flex flex-col min-h-screen relative overflow-x-hidden">
 
     @php
         $cartItems = session('carrito', []);
         $totalItems = count($cartItems);
     @endphp
 
-    <header class="bg-[#343c4c] shadow-lg relative z-40 border-b-4 border-[#dc043c]">
+    <div class="px-2 md:px-6 pt-2 md:pt-4 w-full max-w-[1800px] mx-auto">
+    <header class="bg-[#343c4c]/95 backdrop-blur-md shadow-2xl relative z-40 rounded-[2rem] border border-white/10 w-full">
         
-        <div class="h-1.5 w-full bg-[#dcb47c]"></div>
+        <div class="h-1.5 w-full bg-gradient-to-r from-[#dc043c] via-[#dcb47c] to-[#0464a4] rounded-t-3xl"></div>
 
-        <nav class="container mx-auto px-6 py-4 flex justify-between items-center">
+        <nav class="px-6 py-3 flex justify-between items-center">
 
             <div class="flex items-center space-x-4 flex-shrink-0">
                 <a href="{{ route('home') }}" class="flex items-center group transition">
@@ -38,13 +69,13 @@
             </div>
 
             <div class="hidden xl:flex flex-1 justify-center space-x-1 items-center">
-                <a href="{{ route('home') }}" class="px-3 py-2 text-[#f4f4f4] hover:text-[#dcb47c] rounded-lg font-bold text-xs 2xl:text-sm transition-colors uppercase tracking-wider whitespace-nowrap">
+                <a href="{{ route('home') }}#catalogo" class="px-3 py-2 text-[#f4f4f4] hover:text-[#dcb47c] rounded-lg font-bold text-xs 2xl:text-sm transition-colors uppercase tracking-wider whitespace-nowrap">
                     Catálogo
                 </a>
-                <a href="#" class="px-3 py-2 text-[#f4f4f4] hover:text-[#dcb47c] rounded-lg font-bold text-xs 2xl:text-sm transition-colors uppercase tracking-wider whitespace-nowrap">
+                <a href="{{ route('home', ['sort' => 'nuevos']) }}#catalogo" class="px-3 py-2 text-[#f4f4f4] hover:text-[#dcb47c] rounded-lg font-bold text-xs 2xl:text-sm transition-colors uppercase tracking-wider whitespace-nowrap">
                     Novedades
                 </a>
-                <a href="#" class="px-3 py-2 text-[#dcb47c] hover:text-white rounded-lg font-bold text-xs 2xl:text-sm transition-colors uppercase tracking-wider whitespace-nowrap">
+                <a href="{{ route('home', ['filtro' => 'ofertas']) }}#catalogo" class="px-3 py-2 text-[#dcb47c] hover:text-white rounded-lg font-bold text-xs 2xl:text-sm transition-colors uppercase tracking-wider whitespace-nowrap">
                     Ofertas
                 </a>
 
@@ -91,7 +122,10 @@
                                 <div class="absolute left-0 mt-0 w-52 bg-white border-t-4 border-[#dc043c] rounded-b-xl shadow-2xl opacity-0 invisible translate-y-2 group-hover:opacity-100 group-hover:visible group-hover:translate-y-0 transition-all duration-200 z-50">
                                     <div class="p-2 space-y-1">
                                         <a href="{{ route('cajero.pos.index') }}" class="block px-4 py-2.5 text-sm font-black text-[#dcb47c] bg-[#343c4c] rounded-lg hover:bg-[#dc043c] hover:text-white transition shadow-sm">POS (Venta Directa)</a>
-                                        <a href="{{ route('admin.pagos.index') }}" class="block px-4 py-2.5 text-sm font-semibold text-[#343c4c] hover:bg-[#f4f4f4] hover:text-[#dc043c] rounded-lg transition">Validar Pagos QR</a>
+                                        <a href="{{ route('admin.pagos.index') }}" class="block px-4 py-2.5 text-sm font-semibold text-[#343c4c] hover:bg-[#f4f4f4] hover:text-[#dc043c] rounded-lg transition flex items-center justify-between">
+                                            Validar Pagos QR
+                                            <span id="badge-qr-admin" class="hidden bg-[#dc043c] text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm animate-pulse">0</span>
+                                        </a>
                                         <a href="{{ route('cajero.ventas.index') }}" class="block px-4 py-2.5 text-sm font-semibold text-[#343c4c] hover:bg-[#f4f4f4] hover:text-[#dc043c] rounded-lg transition">Ventas Históricas</a>
                                     </div>
                                 </div>
@@ -118,7 +152,9 @@
                         @elseif(auth()->user()->rol->nombre === 'cajero')
                             <span class="text-[10px] font-black text-[#343c4c] uppercase tracking-widest bg-[#dcb47c] px-3 py-1.5 rounded shadow-sm whitespace-nowrap">Caja</span>
                             <a href="{{ route('cajero.pos.index') }}" class="px-3 py-2 bg-[#dc043c] text-white hover:bg-[#dcb47c] hover:text-[#343c4c] rounded-lg font-bold text-xs 2xl:text-sm transition shadow-sm uppercase whitespace-nowrap">Punto de Venta</a>
-                            <a href="{{ route('admin.pagos.index') }}" class="px-3 py-2 text-[#f4f4f4] hover:text-[#dcb47c] font-bold text-xs 2xl:text-sm transition uppercase whitespace-nowrap">Pagos QR</a>
+                            <a href="{{ route('admin.pagos.index') }}" class="px-3 py-2 text-[#f4f4f4] hover:text-[#dcb47c] font-bold text-xs 2xl:text-sm transition uppercase whitespace-nowrap flex items-center gap-1">
+                                Pagos QR <span id="badge-qr-cajero" class="hidden bg-[#dc043c] text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm animate-pulse">0</span>
+                            </a>
                             <a href="{{ route('cajero.ventas.index') }}" class="px-3 py-2 text-[#f4f4f4] hover:text-[#dcb47c] font-bold text-xs 2xl:text-sm transition uppercase whitespace-nowrap">Ventas</a>
                         @endif
                     @endif
@@ -187,8 +223,9 @@
             </div>
         </nav>
     </header>
+    </div>
 
-    <main class="container mx-auto px-6 py-10 flex-grow">
+    <main class="w-full px-4 md:px-8 py-6 md:py-10 flex-grow max-w-[1800px] mx-auto">
         @if(session('success') && !session('open_cart'))
         <div class="mb-5 bg-green-50 border-l-4 border-green-500 text-green-800 px-5 py-4 rounded shadow-sm flex items-center" role="alert">
             <svg class="w-6 h-6 mr-3 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -226,15 +263,28 @@
         @yield('content')
     </main>
 
-    <footer class="bg-[#343c4c] text-[#f4f4f4] py-10 mt-auto border-t-4 border-[#0464a4]">
-        <div class="container mx-auto px-6 flex flex-col md:flex-row justify-between items-center text-sm font-medium">
-            <div class="mb-4 md:mb-0 flex items-center">
-                <img src="{{ asset('logo/logo.png') }}" class="h-6 w-auto mr-3 grayscale hover:grayscale-0 transition opacity-80 hover:opacity-100" alt="Logo Footer">
-                &copy; {{ date('Y') }} E-Sports S.R.L. Potosí, Bolivia. Todos los derechos reservados.
+    <footer class="bg-[#343c4c] text-[#f4f4f4] py-12 mt-auto border-t-8 border-[#0464a4] relative overflow-hidden">
+        <div class="absolute inset-0 opacity-5 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]"></div>
+        <div class="w-full max-w-[1800px] mx-auto px-4 md:px-8 flex flex-col lg:flex-row justify-between items-center text-sm font-medium relative z-10 gap-6 lg:gap-0">
+            <div class="flex flex-col md:flex-row items-center text-center md:text-left gap-4 md:gap-3">
+                <img src="{{ asset('logo/logo.png') }}" class="h-8 w-auto mr-3 grayscale hover:grayscale-0 transition opacity-80 hover:opacity-100" alt="Logo Footer">
+                <div>
+                    <span class="block font-black tracking-widest uppercase">E-Sports S.R.L. <span class="text-[#dcb47c]">v2.0</span></span>
+                    <span class="text-white/50 text-xs">&copy; {{ date('Y') }} Potosí, Bolivia. Todos los derechos reservados.</span>
+                </div>
             </div>
-            <div class="flex space-x-6">
-                <a href="#" class="hover:text-[#dcb47c] transition-colors">Términos y Condiciones</a>
-                <a href="#" class="hover:text-[#dcb47c] transition-colors">Políticas de Privacidad</a>
+            <div class="flex space-x-6 items-center">
+                <a href="{{ route('pages.terminos') }}" class="hover:text-[#dcb47c] transition-colors text-xs font-bold uppercase tracking-wider">Términos y Condiciones</a>
+                <a href="{{ route('pages.privacidad') }}" class="hover:text-[#dcb47c] transition-colors text-xs font-bold uppercase tracking-wider">Políticas de Privacidad</a>
+                @auth
+                    @if(auth()->user()->rol->nombre === 'admin')
+                        <span class="text-white/20">|</span>
+                        <a href="{{ route('admin.manual') }}" class="text-[#dcb47c] hover:text-white transition-colors text-xs font-black uppercase tracking-wider flex items-center bg-white/10 px-3 py-1 rounded-md shadow-inner">
+                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
+                            Manual
+                        </a>
+                    @endif
+                @endauth
             </div>
         </div>
     </footer>
@@ -325,6 +375,73 @@
             toggleCart();
         });
         @endif
+
+        @if(session('weak_password_notice'))
+        @php session()->forget('weak_password_notice'); @endphp
+        document.addEventListener("DOMContentLoaded", function () {
+            // Importar SweetAlert dinámicamente si no está (aunque debería estar por el CDN en el layout o página)
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    icon: 'info',
+                    title: 'Contraseña poco segura',
+                    text: 'Hemos notado que tu contraseña es muy débil. Te sugerimos cambiarla por una más segura combinando letras, números y símbolos para proteger mejor tu cuenta.',
+                    confirmButtonColor: '#dcb47c',
+                    confirmButtonText: 'Entendido'
+                });
+            }
+        });
+        @endif
+
+        @auth
+        @if(in_array(auth()->user()->rol->nombre ?? '', ['admin', 'cajero']))
+        document.addEventListener("DOMContentLoaded", function() {
+            let lastCount = 0;
+            
+            async function checkPendingQRs() {
+                try {
+                    const res = await fetch("{{ route('api.pagos.pendientes.count') }}");
+                    const data = await res.json();
+                    
+                    const badgeAdmin = document.getElementById('badge-qr-admin');
+                    const badgeCajero = document.getElementById('badge-qr-cajero');
+                    
+                    if(data.count > 0) {
+                        if(badgeAdmin) { badgeAdmin.innerText = data.count; badgeAdmin.classList.remove('hidden'); }
+                        if(badgeCajero) { badgeCajero.innerText = data.count; badgeCajero.classList.remove('hidden'); }
+                        
+                        // Notificar si hay un nuevo pago
+                        if(data.count > lastCount && lastCount !== 0) {
+                            if (typeof Swal !== 'undefined') {
+                                Swal.fire({
+                                    toast: true,
+                                    position: 'top-end',
+                                    icon: 'info',
+                                    title: '¡Nuevo Pago QR!',
+                                    text: 'Tienes una nueva transferencia pendiente de validación.',
+                                    showConfirmButton: false,
+                                    timer: 5000,
+                                    timerProgressBar: true
+                                });
+                            }
+                        }
+                    } else {
+                        if(badgeAdmin) badgeAdmin.classList.add('hidden');
+                        if(badgeCajero) badgeCajero.classList.add('hidden');
+                    }
+                    
+                    lastCount = data.count;
+                } catch(e) {
+                    console.error("Error consultando QRs:", e);
+                }
+            }
+            
+            // Check inmediatamente
+            checkPendingQRs();
+            // Polling cada 15 segundos
+            setInterval(checkPendingQRs, 15000);
+        });
+        @endif
+        @endauth
     </script>
 </body>
 </html>

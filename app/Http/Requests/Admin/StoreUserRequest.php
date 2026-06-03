@@ -65,7 +65,7 @@ class StoreUserRequest extends FormRequest
             'password' => [
                 'required',
                 'string',
-                new PasswordSegura(),
+                'min:6',
             ],
         ];
     }

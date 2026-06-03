@@ -24,38 +24,71 @@
                 
                 <div class="p-6">
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
-                        <div class="md:col-span-3">
+                        <div class="md:col-span-3 relative" id="dropdown_container">
                             <label class="block text-[10px] font-black text-[#343c4c] uppercase tracking-widest mb-1.5">Buscar Variante de Producto</label>
-                            <select id="variante_selector" class="w-full bg-[#f4f4f4] border-none rounded-xl p-3.5 text-sm focus:ring-2 focus:ring-[#0464a4] font-bold text-[#343c4c] cursor-pointer">
-                                <option value="">Seleccione el artículo que ingresa...</option>
+                            
+                            <input type="text" id="buscador_variante" placeholder="Buscar por nombre, marca, talla, color..." autocomplete="off"
+                                class="w-full bg-[#f4f4f4] border-none rounded-xl p-3.5 text-sm focus:ring-2 focus:ring-[#0464a4] font-bold text-[#343c4c]">
+                            
+                            <!-- Dropdown list -->
+                            <div id="lista_variantes" class="absolute z-50 w-full mt-1 bg-white border border-[#343c4c]/10 rounded-xl shadow-2xl max-h-64 overflow-y-auto hidden">
                                 @foreach($variantes as $v)
                                     @if($v->producto->proveedor)
-                                        <option value="{{ $v->id }}" 
-                                                data-nombre="{{ $v->producto->nombre }} ({{ $v->talla }} / {{ $v->color }})"
-                                                data-costo="{{ $v->producto->precio_compra }}"
-                                                data-venta="{{ $v->producto->precio_venta }}"
-                                                data-provid="{{ $v->producto->proveedor_id }}"
-                                                data-provnombre="{{ $v->producto->proveedor->nombre_empresa }}">
-                                            [{{ $v->producto->marca ?? 'E-Sports' }}] {{ $v->producto->nombre }} - Talla: {{ $v->talla ?? 'N/A' }} | Color: {{ $v->color ?? 'N/A' }} (Venta actual: Bs {{ $v->producto->precio_venta }})
-                                        </option>
+                                        <div class="opcion-variante flex items-center p-3 hover:bg-[#f4f4f4] cursor-pointer border-b border-[#343c4c]/5 transition"
+                                            data-id="{{ $v->id }}"
+                                            data-nombre="{{ $v->producto->nombre }} ({{ $v->talla }} / {{ $v->color }})"
+                                            data-costo="{{ $v->producto->precio_compra }}"
+                                            data-venta="{{ $v->producto->precio_venta }}"
+                                            data-provid="{{ $v->producto->proveedor_id }}"
+                                            data-provnombre="{{ $v->producto->proveedor->nombre_empresa }}"
+                                            data-search="{{ strtolower($v->producto->nombre . ' ' . $v->producto->marca . ' ' . $v->talla . ' ' . $v->color) }}">
+                                            
+                                            <div class="flex-shrink-0 mr-3">
+                                                @php $fotos = json_decode($v->producto->imagen_url, true) ?? []; @endphp
+                                                @if(count($fotos) > 0)
+                                                    <img src="{{ asset('storage/' . $fotos[0]) }}" class="w-10 h-10 object-cover rounded-lg border border-[#343c4c]/10">
+                                                @else
+                                                    <div class="w-10 h-10 bg-[#f4f4f4] rounded-lg flex items-center justify-center text-[#343c4c]/40">
+                                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                                                    </div>
+                                                @endif
+                                            </div>
+                                            
+                                            <div class="flex-1 min-w-0">
+                                                <p class="text-sm font-black text-[#343c4c] truncate">[{{ $v->producto->marca ?? 'E-Sports' }}] {{ $v->producto->nombre }}</p>
+                                                <p class="text-[10px] font-bold text-[#0464a4]">Talla: {{ $v->talla ?? 'N/A' }} | Color: {{ $v->color ?? 'N/A' }}</p>
+                                            </div>
+                                            <div class="text-right">
+                                                <p class="text-[10px] text-[#343c4c]/50 font-bold uppercase">Venta Actual</p>
+                                                <p class="text-xs font-black text-[#dc043c]">Bs {{ number_format($v->producto->precio_venta, 2) }}</p>
+                                            </div>
+                                        </div>
                                     @else
-                                        <option value="{{ $v->id }}" disabled class="text-[#dc043c] bg-[#dc043c]/10">
-                                            {{ $v->producto->nombre }} (⚠️ Sin Proveedor Asignado)
-                                        </option>
+                                        <div class="flex items-center p-3 opacity-50 bg-[#dc043c]/5 border-b border-[#343c4c]/5">
+                                            <div class="flex-shrink-0 mr-3">
+                                                <div class="w-10 h-10 bg-[#dc043c]/10 rounded-lg flex items-center justify-center text-[#dc043c]">⚠️</div>
+                                            </div>
+                                            <div class="flex-1 min-w-0">
+                                                <p class="text-sm font-black text-[#dc043c] truncate">{{ $v->producto->nombre }}</p>
+                                                <p class="text-[10px] font-bold text-[#dc043c]">Sin Proveedor Asignado</p>
+                                            </div>
+                                        </div>
                                     @endif
                                 @endforeach
-                            </select>
+                            </div>
+                            <!-- Hidden input to store selected value -->
+                            <input type="hidden" id="variante_selector_hidden" value="">
                         </div>
                         
                         <div>
                             <label class="block text-[10px] font-black text-[#343c4c] uppercase tracking-widest mb-1.5">Cantidad que entra</label>
-                            <input type="number" id="cantidad_selector" min="1" value="1" 
+                            <input type="number" id="cantidad_selector" min="1" max="10000" value="1" 
                                 class="w-full bg-[#f4f4f4] border-none rounded-xl p-3.5 text-sm text-center focus:ring-2 focus:ring-[#0464a4] font-black text-[#343c4c]">
                         </div>
                         
                         <div>
                             <label class="block text-[10px] font-black text-[#343c4c] uppercase tracking-widest mb-1.5">Nuevo Costo (Bs)</label>
-                            <input type="number" id="costo_selector" min="0.1" step="0.01" placeholder="0.00" 
+                            <input type="number" id="costo_selector" min="0.1" max="100000" step="0.01" placeholder="0.00" 
                                 class="w-full bg-[#f4f4f4] border-none rounded-xl p-3.5 text-sm text-right focus:ring-2 focus:ring-[#0464a4] font-black text-[#dc043c]">
                         </div>
 
@@ -136,10 +169,19 @@
 
     <!-- SECCIÓN INFERIOR: Auditoría Kárdex -->
     <div class="mt-12">
-        <div class="mb-5 flex items-center">
-            <svg class="w-6 h-6 mr-2 text-[#dcb47c]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-            <h3 class="text-xl font-black text-[#343c4c] uppercase tracking-tight">Últimos Ingresos Registrados</h3>
-            <span class="ml-3 px-2 py-0.5 bg-[#dcb47c] text-[#343c4c] text-[10px] font-black rounded uppercase tracking-widest">Auditoría Kárdex</span>
+        <div class="mb-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div class="flex items-center">
+                <svg class="w-6 h-6 mr-2 text-[#dcb47c]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                <h3 class="text-xl font-black text-[#343c4c] uppercase tracking-tight">Últimos Ingresos Registrados</h3>
+                <span class="ml-3 px-2 py-0.5 bg-[#dcb47c] text-[#343c4c] text-[10px] font-black rounded uppercase tracking-widest hidden sm:inline-block">Auditoría Kárdex</span>
+            </div>
+            
+            <div class="flex items-center space-x-2 bg-white p-2 rounded-xl border shadow-sm">
+                <input type="date" id="kardex_fecha_inicio" class="text-xs border-none bg-[#f4f4f4] rounded p-2 text-[#343c4c] font-bold outline-none focus:ring-0">
+                <span class="text-[#343c4c]/40 font-black text-[10px]">A</span>
+                <input type="date" id="kardex_fecha_fin" class="text-xs border-none bg-[#f4f4f4] rounded p-2 text-[#343c4c] font-bold outline-none focus:ring-0">
+                <button onclick="filtrarKardex()" class="bg-[#343c4c] text-white p-2 rounded hover:bg-[#0464a4] transition-colors"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg></button>
+            </div>
         </div>
         
         <div class="bg-white rounded-2xl shadow-xl overflow-hidden border border-[#343c4c]/10 text-sm">
@@ -155,21 +197,30 @@
                             <th class="p-4">Detalle Histórico</th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-[#f4f4f4] text-[#343c4c] font-medium">
+                    <tbody id="kardex_tbody" class="divide-y divide-[#f4f4f4] text-[#343c4c] font-medium">
                         @forelse($movimientos as $mov)
-                            <tr class="hover:bg-[#f4f4f4]/50 transition-colors">
+                            <tr class="hover:bg-[#f4f4f4]/50 transition-colors kardex-row">
                                 <td class="p-4 font-bold text-[#343c4c] uppercase">{{ $mov->variante->producto->nombre }} <span class="text-[10px] text-[#0464a4]">({{ $mov->variante->talla }} / {{ $mov->variante->color }})</span></td>
                                 <td class="p-4 text-center font-black text-[#0464a4]">+{{ $mov->cantidad }} un.</td>
                                 <td class="p-4 text-center bg-[#f4f4f4]/50 font-bold text-[#343c4c]/60">{{ $mov->stock_anterior }} un.</td>
                                 <td class="p-4 text-center font-black text-[#343c4c] bg-[#dcb47c]/10">{{ $mov->stock_resultante }} un.</td>
                                 <td class="p-4 font-bold text-xs uppercase">{{ $mov->user->persona->nombre }} {{ $mov->user->persona->apellidos }}</td>
-                                <td class="p-4 text-xs text-[#343c4c]/60">{{ $mov->motivo }}</td>
+                                <td class="p-4 text-xs text-[#343c4c]/60">
+                                    {{ $mov->motivo }}<br>
+                                    <span class="text-[10px] text-[#343c4c]/40">{{ $mov->created_at->format('Y-m-d H:i') }}</span>
+                                </td>
                             </tr>
                         @empty
-                            <tr><td colspan="6" class="p-10 text-center text-[#343c4c]/40 font-bold bg-white">No se registran movimientos de entrada recientes.</td></tr>
+                            <tr id="kardex_empty"><td colspan="6" class="p-10 text-center text-[#343c4c]/40 font-bold bg-white">No se registran movimientos de entrada recientes.</td></tr>
                         @endforelse
                     </tbody>
                 </table>
+            </div>
+            
+            <div class="bg-[#f4f4f4]/50 p-4 text-center border-t border-[#343c4c]/5">
+                <button id="btnCargarMasKardex" onclick="cargarMasKardex()" class="bg-white border border-[#343c4c]/10 text-[#343c4c] font-bold py-2 px-6 rounded-lg text-xs uppercase tracking-widest hover:bg-[#343c4c] hover:text-white transition-colors shadow-sm">
+                    Cargar 25 más
+                </button>
             </div>
         </div>
     </div>
@@ -177,32 +228,89 @@
 
 <script>
     let loteItems = [];
+    let kardexOffset = 25; // Ya cargamos 25 iniciales
 
-    document.getElementById('variante_selector').addEventListener('change', function() {
-        const option = this.options[this.selectedIndex];
-        if(!option.value) return;
-        document.getElementById('costo_selector').value = option.getAttribute('data-costo');
+    // AUTO-CORRECCIONES DE LÍMITES
+    const cantInput = document.getElementById('cantidad_selector');
+    cantInput.addEventListener('input', function() {
+        if (this.value > 10000) this.value = 10000;
+        if (this.value < 1 && this.value !== '') this.value = 1;
+    });
+
+    const costoInput = document.getElementById('costo_selector');
+    costoInput.addEventListener('input', function() {
+        if (this.value > 100000) this.value = 100000;
+        if (this.value < 0 && this.value !== '') this.value = 0;
+    });
+
+    // CUSTOM DROPDOWN SEARCHABLE
+    const buscador = document.getElementById('buscador_variante');
+    const lista = document.getElementById('lista_variantes');
+    const hiddenId = document.getElementById('variante_selector_hidden');
+    let selectedOptionData = null;
+
+    buscador.addEventListener('focus', () => {
+        lista.classList.remove('hidden');
+    });
+
+    document.addEventListener('click', (e) => {
+        if (!document.getElementById('dropdown_container').contains(e.target)) {
+            lista.classList.add('hidden');
+        }
+    });
+
+    buscador.addEventListener('input', function() {
+        const term = this.value.toLowerCase().trim();
+        const opciones = document.querySelectorAll('.opcion-variante');
+        let encontradas = 0;
+        
+        opciones.forEach(op => {
+            if (op.getAttribute('data-search').includes(term)) {
+                op.classList.remove('hidden');
+                encontradas++;
+            } else {
+                op.classList.add('hidden');
+            }
+        });
+    });
+
+    const opcionesDiv = document.querySelectorAll('.opcion-variante');
+    opcionesDiv.forEach(op => {
+        op.addEventListener('click', function() {
+            const id = this.getAttribute('data-id');
+            const nombre = this.getAttribute('data-nombre');
+            const costo = this.getAttribute('data-costo');
+            
+            selectedOptionData = {
+                id: id,
+                nombre: nombre,
+                costo: parseFloat(costo),
+                venta: parseFloat(this.getAttribute('data-venta')),
+                provId: this.getAttribute('data-provid'),
+                provNombre: this.getAttribute('data-provnombre')
+            };
+
+            buscador.value = nombre;
+            hiddenId.value = id;
+            costoInput.value = costo;
+            lista.classList.add('hidden');
+        });
     });
 
     function agregarAlLote() {
-        const selector = document.getElementById('variante_selector');
-        const cantInput = document.getElementById('cantidad_selector');
-        const costoInput = document.getElementById('costo_selector');
-
         const cantidad = parseInt(cantInput.value);
         const costo = parseFloat(costoInput.value);
 
-        if(selector.value === "" || isNaN(cantidad) || cantidad <= 0 || isNaN(costo) || costo <= 0) {
-            alert('Por favor, ingresa parámetros numéricos reales superiores a cero.');
+        if(!selectedOptionData || hiddenId.value === "" || isNaN(cantidad) || cantidad <= 0 || cantidad > 10000 || isNaN(costo) || costo <= 0 || costo > 100000) {
+            alert('Por favor, selecciona un producto válido y asegúrate de que los parámetros numéricos sean reales y dentro de los límites.');
             return;
         }
 
-        const option = selector.options[selector.selectedIndex];
-        const id = option.value;
-        const nombre = option.getAttribute('data-nombre');
-        const precioVenta = parseFloat(option.getAttribute('data-venta'));
-        const provId = option.getAttribute('data-provid');
-        const provNombre = option.getAttribute('data-provnombre');
+        const id = selectedOptionData.id;
+        const nombre = selectedOptionData.nombre;
+        const precioVenta = selectedOptionData.venta;
+        const provId = selectedOptionData.provId;
+        const provNombre = selectedOptionData.provNombre;
 
         const existeIndex = loteItems.findIndex(item => item.id === id);
 
@@ -223,7 +331,9 @@
 
         cantInput.value = 1;
         costoInput.value = '';
-        selector.value = '';
+        buscador.value = '';
+        hiddenId.value = '';
+        selectedOptionData = null;
         
         renderizarLoteTable();
     }
@@ -300,6 +410,63 @@
         totalDisplay.innerText = `Bs ${totalAcumulado.toFixed(2)}`;
         btnSubmit.disabled = false;
         btnSubmit.className = "w-full mt-4 bg-[#dc043c] hover:bg-[#343c4c] text-white font-black py-4 rounded-xl shadow-lg transition-colors text-xs uppercase tracking-widest transform hover:-translate-y-0.5 cursor-pointer";
+    }
+
+    async function cargarMasKardex() {
+        const fechaInicio = document.getElementById('kardex_fecha_inicio').value;
+        const fechaFin = document.getElementById('kardex_fecha_fin').value;
+        
+        const btn = document.getElementById('btnCargarMasKardex');
+        btn.innerText = 'Cargando...';
+        btn.disabled = true;
+
+        try {
+            const res = await fetch(`{{ route('personal.inventario.kardex') }}?offset=${kardexOffset}&fecha_inicio=${fechaInicio}&fecha_fin=${fechaFin}`);
+            const data = await res.json();
+            
+            if (data.movimientos.length === 0) {
+                btn.innerText = 'No hay más resultados';
+                return;
+            }
+
+            const tbody = document.getElementById('kardex_tbody');
+            if(document.getElementById('kardex_empty')) {
+                document.getElementById('kardex_empty').remove();
+            }
+
+            data.movimientos.forEach(mov => {
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-[#f4f4f4]/50 transition-colors kardex-row";
+                tr.innerHTML = `
+                    <td class="p-4 font-bold text-[#343c4c] uppercase">${mov.producto_nombre} <span class="text-[10px] text-[#0464a4]">(${mov.variante_info})</span></td>
+                    <td class="p-4 text-center font-black text-[#0464a4]">+${mov.cantidad} un.</td>
+                    <td class="p-4 text-center bg-[#f4f4f4]/50 font-bold text-[#343c4c]/60">${mov.stock_anterior} un.</td>
+                    <td class="p-4 text-center font-black text-[#343c4c] bg-[#dcb47c]/10">${mov.stock_resultante} un.</td>
+                    <td class="p-4 font-bold text-xs uppercase">${mov.operador}</td>
+                    <td class="p-4 text-xs text-[#343c4c]/60">
+                        ${mov.motivo}<br>
+                        <span class="text-[10px] text-[#343c4c]/40">${mov.fecha}</span>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            kardexOffset += 25;
+            btn.innerText = 'Cargar 25 más';
+            btn.disabled = false;
+        } catch (error) {
+            console.error(error);
+            btn.innerText = 'Error al cargar';
+        }
+    }
+
+    function filtrarKardex() {
+        kardexOffset = 0;
+        document.getElementById('kardex_tbody').innerHTML = '';
+        const btn = document.getElementById('btnCargarMasKardex');
+        btn.disabled = false;
+        btn.innerText = 'Cargar 25 más';
+        cargarMasKardex();
     }
 </script>
 @endsection

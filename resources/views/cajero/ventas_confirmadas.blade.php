@@ -20,8 +20,9 @@
                     <th class="p-4 text-right">Fecha de Operación</th>
                 </tr>
             </thead>
-            <tbody class="text-[#343c4c] font-medium">
+            <tbody class="hidden"></tbody>
                 @forelse($ventas as $venta)
+            <tbody class="text-[#343c4c] font-medium border-b-[12px] border-[#f4f4f4] hover:shadow-lg transition-shadow">
                     <tr class="hover:bg-[#f4f4f4]/50 transition-colors bg-white">
                         <td class="p-4">
                             <span class="font-black text-xl text-[#343c4c] tracking-wide">#{{ $venta->id }}</span>
@@ -65,7 +66,9 @@
                             </ul>
                         </td>
                     </tr>
+            </tbody>
                 @empty
+            <tbody>
                     <tr>
                         <td colspan="5" class="p-12 text-center text-[#343c4c]/40 bg-white">
                             <svg class="w-16 h-16 mx-auto text-[#343c4c]/20 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

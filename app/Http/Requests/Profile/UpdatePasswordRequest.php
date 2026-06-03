@@ -23,12 +23,17 @@ class UpdatePasswordRequest extends FormRequest
             'current_password' => [
                 'required',
                 'string',
+                function ($attribute, $value, $fail) {
+                    if (!\Illuminate\Support\Facades\Hash::check($value, auth()->user()->password)) {
+                        $fail('La contraseña actual no coincide con nuestros registros.');
+                    }
+                },
             ],
             'password' => [
                 'required',
                 'string',
+                'min:6',
                 'confirmed',
-                new PasswordSegura(),
                 // No puede ser igual a la contraseña actual
                 function ($attribute, $value, $fail) {
                     if (\Illuminate\Support\Facades\Hash::check($value, auth()->user()->password)) {

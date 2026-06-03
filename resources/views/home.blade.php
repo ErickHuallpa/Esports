@@ -2,7 +2,7 @@
 
 @section('content')
 
-<div class="relative w-full h-[85vh] bg-[#343c4c] overflow-hidden rounded-b-3xl shadow-2xl -mt-8 mb-12">
+<div class="relative w-full h-[80vh] overflow-hidden rounded-3xl shadow-2xl mt-2 mb-8 mx-auto max-w-[1800px] border-4 border-white/40">
     
     @foreach($destacados as $index => $dest)
         @php 
@@ -89,18 +89,18 @@
          style="background-image: url('{{ asset('img/cesped.png') }}'); background-position: bottom center; background-repeat: repeat-x; background-size: auto 100%; opacity: 1;">
     </div>
 
-    <div class="relative z-10 container mx-auto px-6 max-w-[1400px] pb-32">
+    <div class="relative z-10 w-full mx-auto px-4 md:px-8 max-w-[1800px] pb-20 md:pb-32">
         <form method="GET" action="{{ route('home') }}#catalogo" class="bg-[#343c4c] p-5 rounded-2xl shadow-xl border-b-4 border-[#dcb47c] flex flex-col md:flex-row gap-4 items-center mb-12">
             
             <div class="w-full md:w-2/5 relative">
                 <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                     <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
                 </div>
-                <input type="text" name="search" value="{{ request('search') }}" placeholder="Buscar por nombre o marca..." class="w-full pl-10 pr-4 py-3 rounded-xl border-none focus:ring-4 focus:ring-[#0464a4] text-sm text-[#343c4c] bg-white shadow-inner">
+                <input type="text" name="search" value="{{ request('search') }}" placeholder="Buscar por nombre o marca..." class="w-full pl-10 pr-4 py-3.5 rounded-xl border border-white/40 focus:ring-4 focus:ring-[#0464a4]/50 text-sm text-[#343c4c] bg-white/60 backdrop-blur-md shadow-inner transition-all">
             </div>
 
             <div class="w-full md:w-1/5">
-                <select name="categoria_id" class="w-full py-3 px-4 rounded-xl border-none focus:ring-4 focus:ring-[#0464a4] text-sm text-[#343c4c] bg-white shadow-inner font-semibold cursor-pointer">
+                <select name="categoria_id" class="w-full py-3.5 px-4 rounded-xl border border-white/40 focus:ring-4 focus:ring-[#0464a4]/50 text-sm text-[#343c4c] bg-white/60 backdrop-blur-md shadow-inner font-semibold cursor-pointer transition-all">
                     <option value="">Todas las Categorías</option>
                     @foreach($categorias as $cat)
                         <option value="{{ $cat->id }}" {{ request('categoria_id') == $cat->id ? 'selected' : '' }}>
@@ -111,7 +111,7 @@
             </div>
 
             <div class="w-full md:w-1/5">
-                <select name="sort" class="w-full py-3 px-4 rounded-xl border-none focus:ring-4 focus:ring-[#0464a4] text-sm text-[#343c4c] bg-white shadow-inner font-semibold cursor-pointer">
+                <select name="sort" class="w-full py-3.5 px-4 rounded-xl border border-white/40 focus:ring-4 focus:ring-[#0464a4]/50 text-sm text-[#343c4c] bg-white/60 backdrop-blur-md shadow-inner font-semibold cursor-pointer transition-all">
                     <option value="nuevos" {{ request('sort') == 'nuevos' ? 'selected' : '' }}>Últimos Agregados</option>
                     <option value="precio_asc" {{ request('sort') == 'precio_asc' ? 'selected' : '' }}>Precio: Menor a Mayor</option>
                     <option value="precio_desc" {{ request('sort') == 'precio_desc' ? 'selected' : '' }}>Precio: Mayor a Menor</option>
@@ -150,7 +150,7 @@
                     }
                 @endphp
                 
-                <a href="{{ route('producto.show', $prod->id) }}" class="group relative bg-[#343c4c] rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-500 h-[380px] flex flex-col justify-end border-b-4 border-transparent hover:border-[#dcb47c] z-10">
+                <a href="{{ route('producto.show', $prod->id) }}" class="group relative bg-white/80 backdrop-blur-lg rounded-3xl overflow-hidden shadow-xl hover:shadow-2xl transition-all duration-500 h-[400px] flex flex-col justify-end border border-white z-10 hover:-translate-y-2">
                     
                     @if($portada)
                         <img src="{{ $portada }}" alt="{{ $prod->nombre }}" class="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 opacity-80 group-hover:opacity-100 bg-white">
@@ -192,8 +192,8 @@
                                 <span class="text-xl font-black text-[#dcb47c] drop-shadow-md">Bs {{ number_format($precioMostrar, 2) }}</span>
                             </div>
                             
-                            <div class="w-10 h-10 bg-[#0464a4] rounded-full flex items-center justify-center text-white shadow-lg border border-white/20">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                            <div class="bg-[#dc043c] px-5 py-2 rounded-xl flex items-center justify-center text-white shadow-lg shadow-[#dc043c]/30 border border-white/20 hover:scale-105 transition-transform">
+                                <span class="text-[10px] font-black uppercase tracking-widest">Ver Detalles</span>
                             </div>
                         </div>
                     </div>

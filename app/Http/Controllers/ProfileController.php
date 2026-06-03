@@ -40,18 +40,22 @@ class ProfileController extends Controller
             'username' => $request->username,
             'email' => $request->email,
         ]);
-        return redirect()->back()->with('success', 'Tus datos de perfil han sido actualizados correctamente.');
+        
+        if ($request->wantsJson() || $request->ajax()) {
+            return response()->json(['success' => true, 'message' => 'Tus datos de perfil han sido actualizados correctamente.']);
+        }
     }
+
     public function updatePassword(UpdatePasswordRequest $request)
     {
-        // ✅ Validaciones en UpdatePasswordRequest (contraseña fuerte, no igual a la actual).
         $user = auth()->user();
-        if (!Hash::check($request->current_password, $user->password)) {
-            return back()->withErrors(['current_password' => 'La contraseña actual no coincide con nuestros registros.']);
-        }
         $user->update([
             'password' => Hash::make($request->password)
         ]);
+        
+        if ($request->wantsJson() || $request->ajax()) {
+            return response()->json(['success' => true, 'message' => 'Tu contraseña ha sido cambiada por seguridad.']);
+        }
         return redirect()->back()->with('success', 'Tu contraseña ha sido cambiada por seguridad.');
     }
 }

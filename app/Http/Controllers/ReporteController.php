@@ -26,21 +26,30 @@ class ReporteController extends Controller
         $this->checkAdmin();
         $fechaInicio = $request->get('fecha_inicio', Carbon::now()->subDays(30)->format('Y-m-d'));
         $fechaFin = $request->get('fecha_fin', Carbon::now()->format('Y-m-d'));
+        $orden = $request->get('orden', 'defecto');
         $request->validate([
             'fecha_inicio' => 'nullable|date',
             'fecha_fin' => 'nullable|date|after_or_equal:fecha_inicio',
         ]);
-        $query = Venta::with(['user.persona', 'pago.tipoPago'])
+        $query = Venta::with(['user.persona', 'pago.tipoPago', 'pago.verificador'])
                       ->where('estado_venta', 'confirmada')
                       ->whereBetween('created_at', [$fechaInicio . ' 00:00:00', $fechaFin . ' 23:59:59']);
         if ($request->filled('vendedor_id')) {
-            $query->where('user_id', $request->vendedor_id);
+            $query->whereHas('pago', function($q) use ($request) {
+                $q->where('verificado_por', $request->vendedor_id);
+            });
         }
-        $ventas = $query->orderBy('created_at', 'desc')->paginate(20);
+        
+        if($orden === 'monto_desc') $query->orderBy('precio_total', 'desc');
+        elseif($orden === 'monto_asc') $query->orderBy('precio_total', 'asc');
+        elseif($orden === 'fecha_asc') $query->orderBy('created_at', 'asc');
+        else $query->orderBy('created_at', 'desc');
+        
+        $ventas = $query->paginate(20);
         $totalVentas = $ventas->total();
         $totalIngresos = $ventas->sum('precio_total');
         $ticketPromedio = $totalVentas > 0 ? $totalIngresos / $totalVentas : 0;
-        $productosMasVendidos = DB::table('detalle_ventas')
+        $productosMasVendidosQuery = DB::table('detalle_ventas')
             ->join('producto_variantes', 'detalle_ventas.producto_variante_id', '=', 'producto_variantes.id')
             ->join('productos', 'producto_variantes.producto_id', '=', 'productos.id')
             ->join('ventas', 'detalle_ventas.venta_id', '=', 'ventas.id')
@@ -53,10 +62,18 @@ class ReporteController extends Controller
                 DB::raw('SUM(detalle_ventas.cantidad) as total_vendidos'),
                 DB::raw('SUM(detalle_ventas.subtotal) as total_ingresos')
             )
-            ->groupBy('productos.id', 'productos.nombre', 'productos.imagen_url')
-            ->orderBy('total_vendidos', 'desc')
-            ->limit(10)
-            ->get();
+            ->groupBy('productos.id', 'productos.nombre', 'productos.imagen_url');
+            
+        if($orden === 'ingresos_desc') {
+            $productosMasVendidosQuery->orderBy('total_ingresos', 'desc');
+        } elseif($orden === 'ingresos_asc') {
+            $productosMasVendidosQuery->orderBy('total_ingresos', 'asc');
+        } elseif($orden === 'unidades_asc') {
+            $productosMasVendidosQuery->orderBy('total_vendidos', 'asc');
+        } else {
+            $productosMasVendidosQuery->orderBy('total_vendidos', 'desc');
+        }
+        $productosMasVendidos = $productosMasVendidosQuery->limit(10)->get();
         $totalProductosVendidos = $productosMasVendidos->sum('total_vendidos');
         $clientesFrecuentes = Venta::where('estado_venta', 'confirmada')
             ->whereBetween('created_at', [$fechaInicio . ' 00:00:00', $fechaFin . ' 23:59:59'])
@@ -74,11 +91,17 @@ class ReporteController extends Controller
                     'total_gastado' => $totalGastado,
                     'promedio_compra' => $totalCompras > 0 ? $totalGastado / $totalCompras : 0
                 ];
-            })
-            ->sortByDesc('total_gastado')
-            ->take(10)
-            ->values();
-        $ventasPorCategoria = DB::table('detalle_ventas')
+            });
+            
+        if($orden === 'compras_desc') {
+            $clientesFrecuentes = $clientesFrecuentes->sortByDesc('total_compras');
+        } elseif($orden === 'ticket_desc') {
+            $clientesFrecuentes = $clientesFrecuentes->sortByDesc('promedio_compra');
+        } else {
+            $clientesFrecuentes = $clientesFrecuentes->sortByDesc('total_gastado');
+        }
+        $clientesFrecuentes = $clientesFrecuentes->take(10)->values();
+        $ventasPorCategoriaQuery = DB::table('detalle_ventas')
             ->join('producto_variantes', 'detalle_ventas.producto_variante_id', '=', 'producto_variantes.id')
             ->join('productos', 'producto_variantes.producto_id', '=', 'productos.id')
             ->join('categorias', 'productos.categoria_id', '=', 'categorias.id')
@@ -90,33 +113,40 @@ class ReporteController extends Controller
                 DB::raw('SUM(detalle_ventas.cantidad) as total_vendidos'),
                 DB::raw('SUM(detalle_ventas.subtotal) as total_ingresos')
             )
-            ->groupBy('categorias.nombre')
-            ->orderBy('total_ingresos', 'desc')
-            ->get();
-        $productosBajoStock = Producto::with(['categoria', 'variantes'])
+            ->groupBy('categorias.nombre');
+            
+        if($orden === 'unidades_desc') {
+            $ventasPorCategoriaQuery->orderBy('total_vendidos', 'desc');
+        } else {
+            $ventasPorCategoriaQuery->orderBy('total_ingresos', 'desc');
+        }
+        $ventasPorCategoria = $ventasPorCategoriaQuery->get();
+        $inventarioGeneral = Producto::with(['categoria', 'variantes'])
             ->where('visible', true)
             ->get()
-            ->filter(function($producto) {
-                return $producto->variantes->sum('stock') <= 10;
-            })
             ->map(function($producto) {
                 $stockTotal = $producto->variantes->sum('stock');
-                $stockDetalle = $producto->variantes->map(function($v) {
-                    $talla = $v->talla ?? 'Sin talla';
-                    $color = $v->color ?? 'Sin color';
-                    return "{$talla} - {$color}: {$v->stock}";
-                })->implode(', ');
                 return (object) [
                     'id' => $producto->id,
                     'nombre' => $producto->nombre,
                     'imagen_url' => $producto->imagen_url,
                     'categoria' => $producto->categoria->nombre ?? 'Sin categoría',
                     'stock_total' => $stockTotal,
-                    'stock_detalle' => $stockDetalle ?: 'Sin variantes',
-                    'precio_venta' => $producto->precio_venta
+                    'precio_venta' => $producto->precio_venta,
+                    'valorizacion' => $stockTotal * $producto->precio_venta
                 ];
             })
             ->values();
+            
+        if($orden === 'stock_desc') {
+            $inventarioGeneral = $inventarioGeneral->sortByDesc('stock_total');
+        } elseif($orden === 'valor_desc') {
+            $inventarioGeneral = $inventarioGeneral->sortByDesc('valorizacion');
+        } else {
+            $inventarioGeneral = $inventarioGeneral->sortBy('stock_total');
+        }
+        
+        $productosBajoStock = $inventarioGeneral->filter(fn($p) => $p->stock_total <= 10)->values();
         $usuariosSistema = User::with(['rol', 'persona'])
             ->orderBy('created_at', 'desc')
             ->get()
@@ -169,11 +199,13 @@ class ReporteController extends Controller
             'clientesFrecuentes',
             'ventasPorCategoria',
             'productosBajoStock',
+            'inventarioGeneral',
             'usuariosSistema',
             'proveedores',
             'vendedores',
             'fechaInicio',
-            'fechaFin'
+            'fechaFin',
+            'orden'
         ));
     }
     public function exportarPDF(Request $request)
@@ -187,13 +219,21 @@ class ReporteController extends Controller
         $contenidoHtml = '';
         switch ($tipo) {
             case 'ventas':
-                $query = Venta::with(['user.persona', 'pago.tipoPago'])
+                $query = Venta::with(['user.persona', 'pago.tipoPago', 'pago.verificador'])
                               ->where('estado_venta', 'confirmada')
                               ->whereBetween('created_at', [$fechaInicio . ' 00:00:00', $fechaFin . ' 23:59:59']);
                 if ($request->filled('vendedor_id')) {
-                    $query->where('user_id', $request->vendedor_id);
+                    $query->whereHas('pago', function($q) use ($request) {
+                        $q->where('verificado_por', $request->vendedor_id);
+                    });
                 }
-                $ventas = $query->orderBy('created_at', 'desc')->get();
+                $orden = $request->get('orden', 'defecto');
+                if($orden === 'monto_desc') $query->orderBy('precio_total', 'desc');
+                elseif($orden === 'monto_asc') $query->orderBy('precio_total', 'asc');
+                elseif($orden === 'fecha_asc') $query->orderBy('created_at', 'asc');
+                else $query->orderBy('created_at', 'desc');
+                
+                $ventas = $query->get();
                 $totalIngresos = $ventas->sum('precio_total');
                 $totalVentas = $ventas->count();
                 $titulo = '📊 Reporte de Ventas';
@@ -263,22 +303,37 @@ class ReporteController extends Controller
                 $contenidoHtml = $this->generarTablaCategorias($categorias, $totalIngresos);
                 break;
             case 'inventario':
+            case 'inventario_general':
+                $orden = $request->get('orden', 'defecto');
                 $productos = Producto::with(['categoria', 'variantes'])
                     ->where('visible', true)
                     ->get()
-                    ->filter(function($producto) {
-                        return $producto->variantes->sum('stock') <= 10;
-                    })
                     ->map(function($producto) {
+                        $stockTotal = $producto->variantes->sum('stock');
                         return (object) [
                             'nombre' => $producto->nombre,
                             'categoria' => $producto->categoria->nombre ?? 'Sin categoría',
-                            'stock' => $producto->variantes->sum('stock'),
-                            'precio' => $producto->precio_venta
+                            'stock' => $stockTotal,
+                            'precio' => $producto->precio_venta,
+                            'valorizacion' => $stockTotal * $producto->precio_venta
                         ];
                     })
                     ->values();
-                $titulo = '⚠️ Productos con Stock Bajo';
+                    
+                if($orden === 'stock_desc') {
+                    $productos = $productos->sortByDesc('stock');
+                } elseif($orden === 'valor_desc') {
+                    $productos = $productos->sortByDesc('valorizacion');
+                } else {
+                    $productos = $productos->sortBy('stock');
+                }
+
+                if($tipo === 'inventario') {
+                    $productos = $productos->filter(fn($p) => $p->stock <= 10)->values();
+                    $titulo = '⚠️ Productos con Stock Bajo';
+                } else {
+                    $titulo = '📦 Inventario General';
+                }
                 $subtitulo = "Reporte al: " . date('d/m/Y');
                 $contenidoHtml = $this->generarTablaInventario($productos);
                 break;
@@ -350,7 +405,7 @@ class ReporteController extends Controller
                 <tr>
                     <td>' . $venta->created_at->format('d/m/Y H:i') . '</td>
                     <td>' . ($venta->user->persona->nombre ?? 'N/A') . ' ' . ($venta->user->persona->apellidos ?? '') . '</td>
-                    <td>' . $venta->user->username . '</td>
+                    <td>' . ($venta->pago->verificador->username ?? 'Sistema Web') . '</td>
                     <td class="text-right">Bs ' . number_format($venta->precio_total, 2) . '</td>
                 </tr>';
         }
@@ -382,7 +437,7 @@ class ReporteController extends Controller
                     <th>Producto</th>
                     <th class="text-center">Unidades Vendidas</th>
                     <th class="text-right">Total Ingresos</th>
-                    <th class="text-center">% del Total</th>
+                    <th class="text-center">% Aporte Ventas</th>
                 </tr>
             </thead>
             <tbody>';
@@ -426,7 +481,7 @@ class ReporteController extends Controller
                     <th>Email</th>
                     <th class="text-center">Compras</th>
                     <th class="text-right">Total Gastado</th>
-                    <th class="text-right">Ticket Promedio</th>
+                    <th class="text-right">Ticket Promedio <small>(Gasto/Compra)</small></th>
                 </tr>
             </thead>
             <tbody>';

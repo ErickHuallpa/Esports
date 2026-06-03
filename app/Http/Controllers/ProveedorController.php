@@ -17,11 +17,11 @@ class ProveedorController extends Controller
         $request->validate([
             'nombre_empresa' => 'required|string|max:150',
             'telefono' => 'nullable|string|max:100',
-            'email' => 'nullable|email|max:100|unique:proveedores,email',
+            'email' => 'nullable|email|max:100|unique:proveedores,email' . (isset($id) ? ',' . $id : ''),
             'contacto_nombre' => 'nullable|string|max:150',
             'direccion' => 'nullable|string',
-            'ciudad' => 'nullable|string|max:100',
-            'pais' => 'nullable|string|max:80',
+            'ciudad' => 'required|string|max:100',
+            'pais' => 'required|string|max:80',
         ]);
         Proveedor::create($request->only([
             'nombre_empresa', 'telefono', 'email',
@@ -38,8 +38,8 @@ class ProveedorController extends Controller
             'email' => 'nullable|email|max:100|unique:proveedores,email,' . $proveedor->id,
             'contacto_nombre' => 'nullable|string|max:150',
             'direccion' => 'nullable|string',
-            'ciudad' => 'nullable|string|max:100',
-            'pais' => 'nullable|string|max:80',
+            'ciudad' => 'required|string|max:100',
+            'pais' => 'required|string|max:80',
         ]);
         $proveedor->update($request->only([
             'nombre_empresa', 'telefono', 'email',

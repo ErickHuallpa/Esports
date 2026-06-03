@@ -43,6 +43,29 @@ class PedidoController extends Controller
         return $pdf->download('Comprobante_Venta_'.$venta->id.'.pdf');
     }
 
+    public function marcarComoRecibido($id)
+    {
+        $orden = Orden::where('id', $id)->whereHas('venta', function ($q) {
+            $q->where('user_id', auth()->id());
+        })->firstOrFail();
+
+        $estado = strtolower($orden->estado_orden);
+        if (str_contains($estado, 'listo') || str_contains($estado, 'llegó') || str_contains($estado, 'llego')) {
+            $orden->estado_orden = 'Completada / Entregada';
+            $orden->save();
+
+            if ($orden->envio) {
+                $orden->envio->estado_envio = 'entregado';
+                $orden->envio->fecha_entrega_real = now();
+                $orden->envio->save();
+            }
+
+            return redirect()->back()->with('success', '¡Gracias por confirmar la recepción de tu pedido!');
+        }
+
+        return redirect()->back()->with('error', 'El pedido aún no está listo para ser marcado como recibido.');
+    }
+
     // =======================================================
     // LOGÍSTICA: CONTROL DE ÓRDENES (Envíos y Recojos)
     // =======================================================
@@ -69,6 +92,35 @@ class PedidoController extends Controller
 
         $orden = Orden::with('envio')->findOrFail($id);
 
+        $estadoActual = $orden->estado_orden;
+        $nivelActual = 0;
+        if(str_contains($estadoActual, 'Preparando') || str_contains($estadoActual, 'Listo')) $nivelActual = 1;
+        elseif(str_contains($estadoActual, 'Tránsito')) $nivelActual = 2;
+        elseif(str_contains($estadoActual, 'Llegó')) $nivelActual = 3;
+        elseif(str_contains($estadoActual, 'Entregada') || str_contains($estadoActual, 'Completada')) $nivelActual = 4;
+
+        $nivelNuevo = 0;
+        switch ($request->estado_logistico) {
+            case 'preparando': 
+            case 'listo_tienda':
+                $nivelNuevo = 1; break;
+            case 'en_camino': 
+                $nivelNuevo = 2; break;
+            case 'llego_destino': 
+                $nivelNuevo = 3; break;
+            case 'entregado': 
+                $nivelNuevo = 4; break;
+            case 'fallido': 
+                $nivelNuevo = 99; break;
+        }
+
+        if ($nivelNuevo < $nivelActual && $nivelNuevo !== 99 && !str_contains($estadoActual, 'Problema')) {
+            if ($request->wantsJson() || $request->ajax()) {
+                return response()->json(['success' => false, 'message' => 'No se puede retroceder a un estado anterior.'], 400);
+            }
+            return redirect()->back()->with('error', 'No se puede retroceder a un estado anterior.');
+        }
+
         $estadoOrden = '';
         $estadoEnvioDB = null; 
 
@@ -82,11 +134,19 @@ class PedidoController extends Controller
                 $estadoEnvioDB = 'preparando';
                 break;
             case 'en_camino': 
-                $estadoOrden = 'En Tránsito a Destino'; 
+                if ($orden->envio && $orden->envio->ciudad_destino === 'Potosí') {
+                    $estadoOrden = 'En Tránsito a tu domicilio'; 
+                } else {
+                    $estadoOrden = 'En Tránsito a Destino'; 
+                }
                 $estadoEnvioDB = 'en camino';
                 break;
             case 'llego_destino': 
-                $estadoOrden = 'Llegó al Destino / Agencia'; 
+                if ($orden->envio && $orden->envio->ciudad_destino === 'Potosí') {
+                    $estadoOrden = 'Llegó a tu ubicación'; 
+                } else {
+                    $estadoOrden = 'Llegó al Destino / Agencia'; 
+                }
                 $estadoEnvioDB = 'en camino';
                 break;
             case 'entregado': 
@@ -114,6 +174,15 @@ class PedidoController extends Controller
             if ($request->estado_logistico === 'entregado') {
                 $orden->envio->update(['fecha_entrega_real' => now()]);
             }
+        }
+
+        if ($request->wantsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => true, 
+                'message' => 'Estado actualizado', 
+                'nuevo_estado' => $estadoOrden,
+                'nuevo_estado_envio' => $estadoEnvioDB
+            ]);
         }
 
         return redirect()->back()->with('success', 'El estado logístico de la orden ha sido actualizado.');

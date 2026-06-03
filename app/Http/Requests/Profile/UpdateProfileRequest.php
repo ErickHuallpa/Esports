@@ -5,9 +5,7 @@ namespace App\Http\Requests\Profile;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use App\Rules\NombrePersona;
-use App\Rules\PasswordSegura;
 use App\Rules\CarnetIdentidadBolivia;
-use App\Rules\TelefonoBolivia;
 
 /**
  * FORM REQUEST: UpdateProfileRequest
@@ -41,8 +39,7 @@ class UpdateProfileRequest extends FormRequest
                 Rule::unique('personas', 'ci')->ignore($persona->id),
             ],
             'telefono' => [
-                'nullable', 'string',
-                new TelefonoBolivia(),
+                'nullable', 'string', 'regex:/^\+?[0-9]{7,15}$/'
             ],
             'direccion' => [
                 'nullable', 'string', 'max:255',
@@ -90,6 +87,7 @@ class UpdateProfileRequest extends FormRequest
             'email.required'         => 'El correo electrónico es obligatorio.',
             'email.regex'            => 'El correo no tiene un formato válido. Ej: nombre@dominio.com',
             'email.unique'           => 'Este correo ya está registrado en otra cuenta.',
+            'telefono.regex'         => 'El teléfono ingresado no tiene un formato válido.',
             'foto_perfil.image'      => 'El archivo debe ser una imagen.',
             'foto_perfil.mimes'      => 'La foto debe ser JPG, PNG o WebP.',
             'foto_perfil.max'        => 'La foto no puede superar 2MB.',
@@ -104,6 +102,7 @@ class UpdateProfileRequest extends FormRequest
             'email'     => $this->email     ? mb_strtolower(trim($this->email)) : null,
             'ci'        => $this->ci        ? strtoupper(trim($this->ci)) : null,
             'username'  => $this->username  ? mb_strtolower(trim($this->username)) : null,
+            'telefono'  => $this->telefono  ? preg_replace('/\s+/', '', $this->telefono) : null,
         ]);
     }
 }

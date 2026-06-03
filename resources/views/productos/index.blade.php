@@ -22,7 +22,14 @@
             <h1 class="text-3xl font-black text-[#343c4c] tracking-tight uppercase">Administración de Productos</h1>
             <p class="text-[#343c4c]/60 text-sm font-medium mt-1">Gestiona el catálogo, asigna variantes de stock y supervisa el material 3D.</p>
         </div>
-        <div class="flex flex-col sm:flex-row gap-3">
+            <div class="relative w-full sm:w-64 md:w-80 lg:w-96">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <svg class="h-5 w-5 text-[#343c4c]/40" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                </div>
+                <input type="text" id="buscadorProductos" placeholder="Buscar producto, marca, categoría..." class="w-full bg-white border-2 border-transparent focus:border-[#dcb47c] focus:ring-0 rounded-xl py-3 pl-10 pr-4 text-sm font-bold text-[#343c4c] shadow-sm transition-all placeholder-[#343c4c]/40">
+            </div>
+        </div>
+        <div class="flex flex-col sm:flex-row gap-3 mt-4 md:mt-0 w-full md:w-auto justify-end">
             <button onclick="openCategoriaModal()" class="bg-[#343c4c] hover:bg-[#dcb47c] text-white hover:text-[#343c4c] font-black uppercase tracking-widest py-3 px-5 rounded-xl shadow-md flex items-center justify-center transition-all text-xs transform hover:-translate-y-0.5">
                 <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path></svg>
                 Categoría
@@ -42,7 +49,7 @@
                 $portada = count($fotos) > 0 ? asset('storage/' . $fotos[0]) : null;
             @endphp
             
-            <div class="group relative bg-[#343c4c] rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-500 h-[400px] flex flex-col justify-end border-b-4 border-transparent hover:border-[#dcb47c] z-10">
+            <div class="producto-card group relative bg-[#343c4c] rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-500 h-[400px] flex flex-col justify-end border-b-4 border-transparent hover:border-[#dcb47c] z-10" data-search="{{ strtolower($prod->nombre . ' ' . ($prod->marca ?? '') . ' ' . ($prod->categoria->nombre ?? '')) }}">
                 
                 @if($portada)
                     <img src="{{ $portada }}" alt="{{ $prod->nombre }}" class="absolute inset-0 w-full h-full object-contain transition-transform duration-700 group-hover:scale-110 bg-white">
@@ -168,14 +175,16 @@
                     
                     <div class="border-t-2 border-[#f4f4f4] pt-4 mt-2">
                         <label class="block text-[10px] font-black text-[#343c4c] uppercase tracking-widest mb-1.5">Imágenes</label>
-                        <input type="file" name="imagenes[]" multiple accept="image/*" class="w-full text-[10px] text-[#343c4c] font-bold file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-[10px] file:font-black file:uppercase file:tracking-wider file:bg-[#343c4c] file:text-white file:cursor-pointer hover:file:bg-[#dcb47c] transition-all bg-white rounded-xl shadow-sm p-1">
+                        <input type="file" name="imagenes[]" id="imagenes_input" multiple accept="image/*" class="w-full text-[10px] text-[#343c4c] font-bold file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-[10px] file:font-black file:uppercase file:tracking-wider file:bg-[#343c4c] file:text-white file:cursor-pointer hover:file:bg-[#dcb47c] transition-all bg-white rounded-xl shadow-sm p-1">
                     </div>
+                    <div id="newImagesPreviewContainer" class="flex flex-wrap gap-2 mt-2"></div>
                     <div id="existingImagesContainer" class="flex flex-wrap gap-2 mt-2"></div>
 
                     <div class="border-t-2 border-[#f4f4f4] pt-4 mt-2">
                         <label class="block text-[10px] font-black text-[#dc043c] uppercase tracking-widest mb-1.5">Video (MP4, Max 50MB)</label>
-                        <input type="file" name="video" accept="video/*" class="w-full text-[10px] text-[#dc043c] font-bold file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-[10px] file:font-black file:uppercase file:tracking-wider file:bg-[#dc043c] file:text-white file:cursor-pointer hover:file:bg-[#343c4c] transition-all bg-white rounded-xl shadow-sm p-1">
+                        <input type="file" name="video" id="video_input" accept="video/*" class="w-full text-[10px] text-[#dc043c] font-bold file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-[10px] file:font-black file:uppercase file:tracking-wider file:bg-[#dc043c] file:text-white file:cursor-pointer hover:file:bg-[#343c4c] transition-all bg-white rounded-xl shadow-sm p-1">
                     </div>
+                    <div id="newVideoPreviewContainer" class="mt-2"></div>
                     <div id="existingVideoContainer" class="mt-2"></div>
 
                     <div>
@@ -284,6 +293,9 @@
             form.action = `/productos/${prod.id}`;
             method.value = 'PUT';
 
+            // Al editar sí se permite subir múltiples imágenes
+            document.getElementById('imagenes_input').multiple = true;
+
             // Datos
             document.getElementById('nombre').value = prod.nombre;
             document.getElementById('categoria_id').value = prod.categoria_id;
@@ -353,9 +365,15 @@
             form.action = `{{ route('productos.store') }}`;
             method.value = 'POST';
             form.reset();
+            
+            // Si es nuevo producto, la imagen a subir debe ser solo UNA (la portada)
+            document.getElementById('imagenes_input').multiple = false;
+
             wrapper.innerHTML = '';
             imgContainer.innerHTML = '';
             vidContainer.innerHTML = '';
+            document.getElementById('newImagesPreviewContainer').innerHTML = '';
+            document.getElementById('newVideoPreviewContainer').innerHTML = '';
             
             document.getElementById('eliminar_video').value = '0';
             document.querySelectorAll('input[name="imagenes_a_eliminar[]"]').forEach(el => el.remove());
@@ -375,10 +393,26 @@
     }
     function closeDeleteModal() { document.getElementById('deleteModal').classList.add('hidden'); }
 
-    // Restringir entrada en tiempo real para el nombre del producto (no permite números ni caracteres especiales)
+    // Buscador en tiempo real
+    const buscador = document.getElementById('buscadorProductos');
+    if (buscador) {
+        buscador.addEventListener('input', function(e) {
+            const term = e.target.value.toLowerCase().trim();
+            const cards = document.querySelectorAll('.producto-card');
+            cards.forEach(card => {
+                const searchData = card.getAttribute('data-search');
+                if (searchData.includes(term)) {
+                    card.style.display = 'flex';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        });
+    }
+
+    // Restringir entrada en tiempo real para el nombre del producto (permite letras y números)
     document.getElementById('nombre').addEventListener('input', function(e) {
-        // Reemplaza todo lo que no sea letra, espacio, guion o acento
-        this.value = this.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s\-]/g, '');
+        this.value = this.value.replace(/[^a-zA-Z0-9áéíóúÁÉÍÓÚñÑ\s\-\.\_\(\)\/]/g, '');
     });
 
     // Restringir entrada en tiempo real para los precios (no permite signos negativos ni la letra 'e')
@@ -397,26 +431,29 @@
                 if (parseFloat(this.value) < 0) {
                     this.value = '0';
                 }
+                if (parseFloat(this.value) > 100000) {
+                    this.value = '100000';
+                }
             });
         }
     });
 
     // Validación en Frontend antes de enviar el formulario
     document.getElementById('productoForm').addEventListener('submit', function(e) {
-        // 1. Validación de Nombre
+        // 1. Validación de Nombre Estricta
         const nombreInput = document.getElementById('nombre');
         const nombreVal = nombreInput.value.trim();
-        const regexNombre = /^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s\-]+$/u;
+        const regexNombreLetters = /[\p{L}\p{N}]/u; // Debe tener al menos una letra o número
         
         if (nombreVal.length < 3) {
             e.preventDefault();
-            alert('El nombre del producto debe tener al menos 3 caracteres.');
+            Swal.fire({ icon: 'warning', title: 'Nombre corto', text: 'El nombre del producto debe tener al menos 3 caracteres.', confirmButtonColor: '#0464a4' });
             nombreInput.focus();
             return false;
         }
-        if (!regexNombre.test(nombreVal)) {
+        if (!regexNombreLetters.test(nombreVal)) {
             e.preventDefault();
-            alert('El nombre del producto solo puede contener letras, espacios y guiones. No se permiten números ni caracteres especiales.');
+            Swal.fire({ icon: 'warning', title: 'Nombre inválido', text: 'El nombre del producto debe ser lógico, no puede estar compuesto únicamente por guiones o símbolos (como ----).', confirmButtonColor: '#0464a4' });
             nombreInput.focus();
             return false;
         }
@@ -427,19 +464,31 @@
         
         if (parseFloat(precioCompraInput.value) < 0) {
             e.preventDefault();
-            alert('El costo de compra no puede ser negativo.');
+            Swal.fire({ icon: 'warning', title: 'Precio inválido', text: 'El costo de compra no puede ser negativo.', confirmButtonColor: '#0464a4' });
+            precioCompraInput.focus();
+            return false;
+        }
+        if (parseFloat(precioCompraInput.value) > 100000) {
+            e.preventDefault();
+            Swal.fire({ icon: 'warning', title: 'Límite excedido', text: 'El costo de compra no puede exceder los 100,000 Bs por razones de seguridad.', confirmButtonColor: '#0464a4' });
             precioCompraInput.focus();
             return false;
         }
         if (parseFloat(precioVentaInput.value) < 0) {
             e.preventDefault();
-            alert('El precio de venta no puede ser negativo.');
+            Swal.fire({ icon: 'warning', title: 'Precio inválido', text: 'El precio de venta no puede ser negativo.', confirmButtonColor: '#0464a4' });
+            precioVentaInput.focus();
+            return false;
+        }
+        if (parseFloat(precioVentaInput.value) > 100000) {
+            e.preventDefault();
+            Swal.fire({ icon: 'warning', title: 'Límite excedido', text: 'El precio de venta no puede exceder los 100,000 Bs por razones de seguridad.', confirmButtonColor: '#0464a4' });
             precioVentaInput.focus();
             return false;
         }
         if (parseFloat(precioVentaInput.value) < parseFloat(precioCompraInput.value)) {
             e.preventDefault();
-            alert('El precio de venta (PVP) debe ser mayor o igual al costo de compra.');
+            Swal.fire({ icon: 'warning', title: 'Margen de pérdida', text: 'El precio de venta (PVP) debe ser mayor o igual al costo de compra para no generar pérdidas.', confirmButtonColor: '#dc043c' });
             precioVentaInput.focus();
             return false;
         }
@@ -450,7 +499,7 @@
             const regexAlfanumerico = /[\p{L}\p{N}]/u;
             if (!regexAlfanumerico.test(marcaVal)) {
                 e.preventDefault();
-                alert('La marca de fabricación debe contener letras o números y no puede consistir únicamente en símbolos o líneas (como -------, ______, etc.).');
+                Swal.fire({ icon: 'warning', title: 'Marca inválida', text: 'La marca de fabricación debe contener letras o números y no puede consistir únicamente en símbolos o líneas.', confirmButtonColor: '#0464a4' });
                 marcaInput.focus();
                 return false;
             }
@@ -465,11 +514,51 @@
 
             if (!allowedFormats.includes(fileExtension)) {
                 e.preventDefault();
-                alert('El formato de video no es compatible (usa mp4, avi, mov, webm, etc.).');
+                Swal.fire({ icon: 'error', title: 'Formato no soportado', text: 'El formato de video no es compatible (usa mp4, avi, mov, webm, etc.).', confirmButtonColor: '#dc043c' });
                 return false;
             }
         }
         return true;
+    });
+
+    // Vista previa de Imágenes
+    document.getElementById('imagenes_input').addEventListener('change', function(e) {
+        const container = document.getElementById('newImagesPreviewContainer');
+        container.innerHTML = ''; 
+        const files = Array.from(e.target.files);
+        files.forEach(file => {
+            if(file.type.startsWith('image/')) {
+                const url = URL.createObjectURL(file);
+                container.insertAdjacentHTML('beforeend', `
+                    <div class="relative w-16 h-16 rounded-lg overflow-hidden border-2 border-[#0464a4] group shadow-sm">
+                        <img src="${url}" class="w-full h-full object-cover">
+                        <div class="absolute inset-0 flex items-center justify-center pointer-events-none bg-[#343c4c]/50 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <span class="text-white text-[8px] font-black uppercase">Nueva</span>
+                        </div>
+                    </div>
+                `);
+            }
+        });
+    });
+
+    // Vista previa de Video
+    document.getElementById('video_input').addEventListener('change', function(e) {
+        const container = document.getElementById('newVideoPreviewContainer');
+        container.innerHTML = '';
+        if(e.target.files.length > 0) {
+            const file = e.target.files[0];
+            if(file.type.startsWith('video/')) {
+                const url = URL.createObjectURL(file);
+                container.insertAdjacentHTML('beforeend', `
+                    <div class="relative w-full h-24 bg-[#343c4c] rounded-xl overflow-hidden border-2 border-[#dc043c] shadow-sm flex items-center justify-center">
+                        <video src="${url}" class="w-full h-full object-cover opacity-80" autoplay muted loop></video>
+                        <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
+                            <span class="text-white text-[10px] font-black uppercase tracking-widest bg-[#dc043c]/80 px-2 py-1 rounded">📹 Nuevo Video</span>
+                        </div>
+                    </div>
+                `);
+            }
+        }
     });
 </script>
 @endsection

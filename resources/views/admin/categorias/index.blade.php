@@ -66,21 +66,23 @@
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
             </button>
         </div>
-        <form action="{{ route('admin.categorias.store') }}" method="POST">
+        <form action="{{ route('admin.categorias.store') }}" method="POST" id="crearForm">
             @csrf
             <div class="p-6 space-y-5">
                 <div>
                     <label class="block text-[10px] font-black text-[#343c4c] uppercase tracking-widest mb-1">Nombre de la Categoría *</label>
-                    <input type="text" name="nombre" required placeholder="Ej: Indumentaria Oficial" class="w-full bg-[#f4f4f4] border-none rounded-xl p-3 text-sm focus:ring-2 focus:ring-[#0464a4] text-[#343c4c]">
+                    <input type="text" name="nombre" id="crear_nombre" required maxlength="100" placeholder="Ej: Indumentaria Oficial" class="val-input-crear w-full bg-[#f4f4f4] border-2 border-transparent rounded-xl p-3 text-sm focus:ring-2 focus:ring-[#0464a4] text-[#343c4c] transition-colors">
+                    <p class="text-xs text-red-600 mt-1 font-bold hidden" id="err_crear_nombre"></p>
                 </div>
                 <div>
                     <label class="block text-[10px] font-black text-[#343c4c] uppercase tracking-widest mb-1">Descripción Breve</label>
-                    <textarea name="descripcion" rows="3" placeholder="Describe los artículos que agrupa esta categoría..." class="w-full bg-[#f4f4f4] border-none rounded-xl p-3 text-sm focus:ring-2 focus:ring-[#0464a4] text-[#343c4c]"></textarea>
+                    <textarea name="descripcion" id="crear_descripcion" rows="3" maxlength="255" placeholder="Describe los artículos que agrupa esta categoría..." class="val-input-crear w-full bg-[#f4f4f4] border-2 border-transparent rounded-xl p-3 text-sm focus:ring-2 focus:ring-[#0464a4] text-[#343c4c] transition-colors"></textarea>
+                    <p class="text-xs text-red-600 mt-1 font-bold hidden" id="err_crear_descripcion"></p>
                 </div>
             </div>
             <div class="px-6 py-5 border-t border-[#f4f4f4] bg-white flex justify-end space-x-3">
                 <button type="button" onclick="cerrarCrearModal()" class="px-5 py-2.5 text-xs font-bold text-[#343c4c] hover:bg-[#f4f4f4] rounded-xl transition-colors">Cancelar</button>
-                <button type="submit" class="px-5 py-2.5 bg-[#0464a4] hover:bg-[#343c4c] text-white text-xs font-black uppercase tracking-wider rounded-xl transition-colors shadow-md">Guardar Categoría</button>
+                <button type="submit" id="btnCrearSubmit" class="px-5 py-2.5 bg-[#0464a4] hover:bg-[#343c4c] text-white text-xs font-black uppercase tracking-wider rounded-xl transition-colors shadow-md disabled:opacity-50 disabled:cursor-not-allowed">Guardar Categoría</button>
             </div>
         </form>
     </div>
@@ -100,37 +102,141 @@
             <div class="p-6 space-y-5">
                 <div>
                     <label class="block text-[10px] font-black text-[#343c4c] uppercase tracking-widest mb-1">Nombre de la Categoría *</label>
-                    <input type="text" id="edit_nombre" name="nombre" required class="w-full bg-[#f4f4f4] border-none rounded-xl p-3 text-sm focus:ring-2 focus:ring-[#0464a4] text-[#343c4c]">
+                    <input type="text" id="edit_nombre" name="nombre" required maxlength="100" class="val-input-edit w-full bg-[#f4f4f4] border-2 border-transparent rounded-xl p-3 text-sm focus:ring-2 focus:ring-[#0464a4] text-[#343c4c] transition-colors">
+                    <p class="text-xs text-red-600 mt-1 font-bold hidden" id="err_edit_nombre"></p>
                 </div>
                 <div>
                     <label class="block text-[10px] font-black text-[#343c4c] uppercase tracking-widest mb-1">Descripción Breve</label>
-                    <textarea id="edit_descripcion" name="descripcion" rows="3" class="w-full bg-[#f4f4f4] border-none rounded-xl p-3 text-sm focus:ring-2 focus:ring-[#0464a4] text-[#343c4c]"></textarea>
+                    <textarea id="edit_descripcion" name="descripcion" rows="3" maxlength="255" class="val-input-edit w-full bg-[#f4f4f4] border-2 border-transparent rounded-xl p-3 text-sm focus:ring-2 focus:ring-[#0464a4] text-[#343c4c] transition-colors"></textarea>
+                    <p class="text-xs text-red-600 mt-1 font-bold hidden" id="err_edit_descripcion"></p>
                 </div>
             </div>
             <div class="px-6 py-5 border-t border-[#f4f4f4] bg-white flex justify-end space-x-3">
                 <button type="button" onclick="cerrarEditarModal()" class="px-5 py-2.5 text-xs font-bold text-[#343c4c] hover:bg-[#f4f4f4] rounded-xl transition-colors">Cancelar</button>
-                <button type="submit" class="px-5 py-2.5 bg-[#0464a4] hover:bg-[#343c4c] text-white text-xs font-black uppercase tracking-wider rounded-xl transition-colors shadow-md">Guardar Cambios</button>
+                <button type="submit" id="btnEditSubmit" class="px-5 py-2.5 bg-[#0464a4] hover:bg-[#343c4c] text-white text-xs font-black uppercase tracking-wider rounded-xl transition-colors shadow-md disabled:opacity-50 disabled:cursor-not-allowed">Guardar Cambios</button>
             </div>
         </form>
     </div>
 </div>
 
 <script>
-    function abrirCrearModal() {
-        document.getElementById('crearModal').classList.remove('hidden');
-    }
-    function cerrarCrearModal() {
-        document.getElementById('crearModal').classList.add('hidden');
+    // Validaciones
+    function valNombre(v) {
+        if(!v) return "El nombre es obligatorio.";
+        const str = v.trim();
+        if(str.length === 0) return "El nombre es obligatorio.";
+        if(str.length < 3) return "Debe tener al menos 3 caracteres.";
+        if(str.length > 25) return "Máximo 25 caracteres permitidos.";
+        if(!/^[a-zA-ZáéíóúÁÉÍÓÚñÑ0-9\s\-_]+$/.test(str)) return "Contiene caracteres no permitidos (solo letras, números y guiones).";
+        return null;
     }
 
-    function abrirEditarModal(id, nombre, descripcion) {
-        document.getElementById('editarForm').action = `/categorias/${id}`;
-        document.getElementById('edit_nombre').value = nombre;
-        document.getElementById('edit_descripcion').value = descripcion;
+    function valDescripcion(v) {
+        if(!v) return null;
+        const str = v.trim();
+        if(str.length === 0) return null; // opcional
+        if(str.length < 5) return "Si ingresas una descripción, debe tener mínimo 5 caracteres.";
+        return null;
+    }
+
+    function setFieldError(inputEl, errEl, msg) {
+        if(!inputEl || !errEl) return;
+        if(msg) {
+            errEl.innerText = msg;
+            errEl.classList.remove('hidden');
+            inputEl.classList.add('border-red-400', 'bg-red-50');
+            inputEl.classList.remove('border-green-400', 'bg-green-50', 'border-transparent');
+        } else {
+            errEl.classList.add('hidden');
+            if(inputEl.value && inputEl.value.trim().length > 0) {
+                inputEl.classList.remove('border-red-400', 'bg-red-50', 'border-transparent');
+                inputEl.classList.add('border-green-400', 'bg-green-50');
+            } else {
+                inputEl.classList.remove('border-red-400', 'bg-red-50', 'border-green-400', 'bg-green-50');
+                inputEl.classList.add('border-transparent');
+            }
+        }
+    }
+
+    function checkCrearForm() {
+        const nInput = document.getElementById('crear_nombre');
+        const dInput = document.getElementById('crear_descripcion');
+        if(!nInput || !dInput) return;
+
+        const nErr = valNombre(nInput.value);
+        const dErr = valDescripcion(dInput.value);
+        
+        setFieldError(nInput, document.getElementById('err_crear_nombre'), nErr);
+        setFieldError(dInput, document.getElementById('err_crear_descripcion'), dErr);
+        
+        const btn = document.getElementById('btnCrearSubmit');
+        if(btn) btn.disabled = (nErr !== null || dErr !== null || !nInput.value.trim());
+    }
+
+    function checkEditForm() {
+        const nInput = document.getElementById('edit_nombre');
+        const dInput = document.getElementById('edit_descripcion');
+        if(!nInput || !dInput) return;
+
+        const nErr = valNombre(nInput.value);
+        const dErr = valDescripcion(dInput.value);
+        
+        setFieldError(nInput, document.getElementById('err_edit_nombre'), nErr);
+        setFieldError(dInput, document.getElementById('err_edit_descripcion'), dErr);
+        
+        const btn = document.getElementById('btnEditSubmit');
+        if(btn) btn.disabled = (nErr !== null || dErr !== null || !nInput.value.trim());
+    }
+
+    document.querySelectorAll('.val-input-crear').forEach(el => {
+        el.addEventListener('input', checkCrearForm);
+        el.addEventListener('change', checkCrearForm);
+    });
+
+    document.querySelectorAll('.val-input-edit').forEach(el => {
+        el.addEventListener('input', checkEditForm);
+        el.addEventListener('change', checkEditForm);
+    });
+
+    window.abrirCrearModal = function() {
+        const form = document.getElementById('crearForm');
+        if(form) form.reset();
+        
+        // Limpiar estados de validación
+        document.querySelectorAll('.val-input-crear').forEach(el => {
+            el.classList.remove('border-red-400', 'bg-red-50', 'border-green-400', 'bg-green-50');
+            el.classList.add('border-transparent');
+        });
+        document.querySelectorAll('#err_crear_nombre, #err_crear_descripcion').forEach(el => el.classList.add('hidden'));
+        
+        const btn = document.getElementById('btnCrearSubmit');
+        if(btn) btn.disabled = true;
+
+        document.getElementById('crearModal').classList.remove('hidden');
+    };
+    
+    window.cerrarCrearModal = function() {
+        document.getElementById('crearModal').classList.add('hidden');
+    };
+
+    window.abrirEditarModal = function(id, nombre, descripcion) {
+        const form = document.getElementById('editarForm');
+        if(form) form.action = `/categorias/${id}`;
+        
+        const inputNombre = document.getElementById('edit_nombre');
+        const inputDesc = document.getElementById('edit_descripcion');
+        
+        if(inputNombre) inputNombre.value = nombre;
+        if(inputDesc) inputDesc.value = descripcion;
+        
+        // Ejecutar validación para mostrar colores iniciales
+        checkEditForm();
+        
         document.getElementById('editarModal').classList.remove('hidden');
-    }
-    function cerrarEditarModal() {
+    };
+    
+    window.cerrarEditarModal = function() {
         document.getElementById('editarModal').classList.add('hidden');
-    }
+    };
 </script>
 @endsection

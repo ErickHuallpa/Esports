@@ -84,4 +84,51 @@ class UserController extends Controller
         $msg = $user->activo ? 'El usuario ha sido reactivado.' : 'El usuario fue dado de baja del sistema.';
         return back()->with('success', $msg);
     }
+
+    public function validarUnico(Request $request)
+    {
+        $errores = [];
+        $userId = $request->user_id; // Passed when editing
+
+        if ($request->has('username')) {
+            $username = trim($request->username);
+            $query = User::where('username', $username);
+            if ($userId) $query->where('id', '!=', $userId);
+            if ($query->exists()) {
+                $errores[] = ['campo' => 'username', 'mensaje' => 'Este nombre de usuario ya está en uso.'];
+            }
+        }
+        if ($request->has('email')) {
+            $email = trim($request->email);
+            $query = User::where('email', $email);
+            if ($userId) $query->where('id', '!=', $userId);
+            if ($query->exists()) {
+                $errores[] = ['campo' => 'email', 'mensaje' => 'Este correo electrónico ya ha sido registrado.'];
+            }
+        }
+        if ($request->has('ci') && !empty($request->ci)) {
+            $ci = trim($request->ci);
+            $query = Persona::where('ci', $ci);
+            if ($userId) {
+                $personaId = User::find($userId)->persona_id ?? null;
+                if ($personaId) $query->where('id', '!=', $personaId);
+            }
+            if ($query->exists()) {
+                $errores[] = ['campo' => 'ci', 'mensaje' => 'Alguien ya se registró con esta Cédula de Identidad.'];
+            }
+        }
+        if ($request->has('telefono') && !empty($request->telefono)) {
+            $telefono = trim($request->telefono);
+            $query = Persona::where('telefono', $telefono);
+            if ($userId) {
+                $personaId = User::find($userId)->persona_id ?? null;
+                if ($personaId) $query->where('id', '!=', $personaId);
+            }
+            if ($query->exists()) {
+                $errores[] = ['campo' => 'telefono', 'mensaje' => 'Este teléfono ya ha sido registrado.'];
+            }
+        }
+
+        return response()->json(['valid' => count($errores) === 0, 'errores' => $errores]);
+    }
 }

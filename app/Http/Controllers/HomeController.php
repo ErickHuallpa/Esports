@@ -46,6 +46,14 @@ class HomeController extends Controller
             $query->where('categoria_id', $request->categoria_id);
         }
 
+        if ($request->filled('filtro') && $request->filtro === 'ofertas') {
+            $query->whereHas('ofertas', function($q) {
+                $q->where('fecha_inicio', '<=', now())
+                  ->where('fecha_fin', '>=', now())
+                  ->where('activa', true);
+            });
+        }
+
         if ($request->filled('sort')) {
             switch ($request->sort) {
                 case 'precio_asc':

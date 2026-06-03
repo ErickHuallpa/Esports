@@ -45,19 +45,23 @@ class PosController extends Controller
     {
         $request->validate([
             'ci' => 'required|string|max:20',
-            'nombre' => 'required|string|max:100',
-            'apellidos' => 'required|string|max:100',
-            'email' => 'required|email|max:150',
+            'nombre' => ['required', 'string', 'max:100', 'regex:/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/'],
+            'apellidos' => ['required', 'string', 'max:100', 'regex:/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/'],
+            'email' => 'nullable|email|max:150',
             'tipo_pago_id' => 'required|exists:tipo_pagos,id',
             'variante_id' => 'required|array|min:1',
             'cantidad' => 'required|array|min:1',
+        ], [
+            'nombre.regex' => 'El nombre solo debe contener letras y espacios.',
+            'apellidos.regex' => 'El apellido solo debe contener letras y espacios.',
         ]);
         DB::beginTransaction();
         try {
             $persona = Persona::where('ci', $request->ci)->first();
+            $mensajeCuenta = null;
             
             if (!$persona) {
-                if(User::where('email', $request->email)->exists()) {
+                if($request->email && User::where('email', $request->email)->exists()) {
                     return back()->with('error', 'El correo electrónico ya pertenece a otro usuario registrado.');
                 }
                 $persona = Persona::create([
@@ -65,16 +69,38 @@ class PosController extends Controller
                     'apellidos' => $request->apellidos,
                     'ci' => $request->ci,
                 ]);
+                
+                // Generación inteligente de username
+                $baseUsername = strtolower(substr(trim($request->nombre), 0, 1) . str_replace(' ', '', trim($request->apellidos)));
+                $username = $baseUsername;
+                $contador = 1;
+                while(User::where('username', $username)->exists()){
+                    $username = $baseUsername . $contador;
+                    $contador++;
+                }
+
+                $emailFinal = $request->email;
+                $esFicticio = false;
+                if(empty($emailFinal)){
+                    $emailFinal = $username . '@cliente.local';
+                    $esFicticio = true;
+                }
+
                 $rolCliente = Rol::where('nombre', 'cliente')->first();
                 
                 $user = User::create([
                     'persona_id' => $persona->id,
                     'rol_id' => $rolCliente->id,
-                    'email' => $request->email,
-                    'username' => 'cliente_' . $request->ci,
+                    'email' => $emailFinal,
+                    'username' => $username,
                     'password' => Hash::make($request->ci), 
                     'activo' => true,
                 ]);
+
+                $mensajeCuenta = "Se ha creado una cuenta web para el cliente.<br><br>👤 <b>Usuario:</b> " . $username . "<br>🔑 <b>Contraseña:</b> " . $request->ci;
+                if($esFicticio){
+                    $mensajeCuenta .= "<br><br><span style='color:#dc043c;font-size:12px;'>⚠️ <b>Nota:</b> No tenía correo, se le asignó uno interno ficticio (" . $emailFinal . "). Indíquele que puede actualizarlo en la sección 'Mi Cuenta' cuando ingrese a la web.</span>";
+                }
             } else {
                 $user = $persona->user;
             }
@@ -144,6 +170,10 @@ class PosController extends Controller
                 'direccion_envio' => 'Entregado presencialmente en tienda',
             ]);
             DB::commit();
+            
+            if($mensajeCuenta){
+                return redirect()->route('cajero.pos.index')->with('success', '¡Venta presencial completada con éxito!')->with('cuenta_creada', $mensajeCuenta);
+            }
             return redirect()->route('cajero.pos.index')->with('success', '¡Venta presencial completada con éxito!');
         } catch (\Exception $e) {
             DB::rollBack();

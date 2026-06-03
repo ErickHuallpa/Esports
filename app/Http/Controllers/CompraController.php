@@ -164,6 +164,7 @@ class CompraController extends Controller
                     'direccion_destino' => $direccionFinal,
                     'ciudad_destino' => $ciudadFinal,
                     'zona_destino' => $zonaFinal,
+                    'ruta' => $request->coordenadas ?? null,
                     'estado_envio' => 'preparando',
                     'costo_envio' => $costoEnvio,
                 ]);
@@ -171,9 +172,26 @@ class CompraController extends Controller
             DB::commit();
             session()->forget('carrito');
             Cache::forget('carrito_user_' . auth()->id());
+            
+            if ($request->wantsJson() || $request->ajax()) {
+                return response()->json([
+                    'success' => true, 
+                    'redirect' => url('/'), 
+                    'message' => '¡Su orden ha sido registrada! Espere a que el personal corrobore su pago.'
+                ]);
+            }
+            
             return redirect('/')->with('success', '¡Su orden ha sido registrada! Espere a que el personal corrobore su pago.');
         } catch (\Exception $e) {
             DB::rollBack();
+            
+            if ($request->wantsJson() || $request->ajax()) {
+                return response()->json([
+                    'success' => false, 
+                    'message' => 'Fallo crítico en el checkout: ' . $e->getMessage()
+                ], 500);
+            }
+            
             return back()->with('error', 'Fallo crítico en el checkout: ' . $e->getMessage());
         }
     }
@@ -182,17 +200,38 @@ class CompraController extends Controller
         $pagos = Pago::with(['user.persona', 'tipoPago', 'venta'])->where('estado', 'pendiente')->orderBy('id', 'asc')->get();
         return view('admin.pagos.index', compact('pagos'));
     }
+
+    public function countPagosPendientes()
+    {
+        if(!auth()->check() || !in_array(auth()->user()->rol->nombre ?? '', ['admin', 'cajero'])) {
+            return response()->json(['count' => 0]);
+        }
+        $count = Pago::where('estado', 'pendiente')->whereHas('tipoPago', function($q){
+            $q->where('nombre', 'QR');
+        })->count();
+        return response()->json(['count' => $count]);
+    }
     public function verificarPago(Request $request, $id)
     {
         $request->validate([
             'accion' => 'required|in:aprobar,rechazar',
-            'motivo_rechazo' => 'required_if:accion,rechazar|string|nullable',
-            'observaciones' => 'nullable|string'
+            'motivo_rechazo' => 'required_if:accion,rechazar|string|nullable|max:255',
+            'observaciones' => 'nullable|string|max:500'
         ]);
-        $pago = Pago::with('venta.detalles.variante')->findOrFail($id);
+        $pago = Pago::with(['venta.detalles.variante', 'tipoPago', 'venta.orden'])->findOrFail($id);
+        
+        if ($pago->estado !== 'pendiente') {
+            return back()->with('error', 'Esta transacción ya ha sido procesada previamente.');
+        }
+
         if ($pago->user_id === auth()->id()) {
             return back()->with('error', 'Alerta de Seguridad: No tienes autorización para evaluar ni aprobar tus propias transacciones o comprobantes.');
         }
+        
+        if ($pago->tipoPago->nombre !== 'QR') {
+            return back()->with('error', 'Alerta de Seguridad: Este pago no es de tipo QR y no requiere validación de comprobante.');
+        }
+
         DB::beginTransaction();
         try {
             if ($request->accion === 'aprobar') {

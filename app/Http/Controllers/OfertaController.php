@@ -10,7 +10,12 @@ class OfertaController extends Controller
 {
     public function index()
     {
-        $ofertas = Oferta::with('producto')->orderBy('id', 'desc')->get();
+        // Solo obtener ofertas cuya fecha_fin sea mayor o igual a hoy (activas o futuras)
+        $ofertas = Oferta::with('producto')
+            ->where('fecha_fin', '>=', now()->startOfDay())
+            ->orderBy('id', 'desc')
+            ->get();
+            
         $productosDisponibles = Producto::whereDoesntHave('ofertas', function ($q) {
             $q->where('fecha_fin', '>=', now());
         })->where('visible', true)->get();
@@ -20,8 +25,8 @@ class OfertaController extends Controller
     {
         $request->validate([
             'producto_id' => 'required|exists:productos,id',
-            'porcentaje_descuento' => 'required|numeric|min:1|max:99',
-            'fecha_inicio' => 'required|date|before:fecha_fin',
+            'porcentaje_descuento' => 'required|numeric|min:5|max:80|multiple_of:5',
+            'fecha_inicio' => 'required|date|after_or_equal:today|before:fecha_fin',
             'fecha_fin' => 'required|date|after:fecha_inicio',
         ]);
         Oferta::create([
@@ -32,6 +37,26 @@ class OfertaController extends Controller
             'activa' => true,
         ]);
         return redirect()->route('admin.ofertas.index')->with('success', 'Campaña de descuento creada exitosamente.');
+    }
+    public function update(Request $request, $id)
+    {
+        $oferta = Oferta::findOrFail($id);
+        
+        $request->validate([
+            'producto_id' => 'required|exists:productos,id',
+            'porcentaje_descuento' => 'required|numeric|min:5|max:80|multiple_of:5',
+            'fecha_inicio' => 'required|date|before:fecha_fin',
+            'fecha_fin' => 'required|date|after:fecha_inicio',
+        ]);
+
+        $oferta->update([
+            'producto_id' => $request->producto_id,
+            'porcentaje_descuento' => $request->porcentaje_descuento,
+            'fecha_inicio' => $request->fecha_inicio,
+            'fecha_fin' => $request->fecha_fin,
+        ]);
+
+        return redirect()->route('admin.ofertas.index')->with('success', 'Campaña de descuento actualizada exitosamente.');
     }
     public function destroy($id)
     {

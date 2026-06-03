@@ -72,7 +72,7 @@ class UpdateUserRequest extends FormRequest
             'password' => [
                 'nullable',
                 'string',
-                new PasswordSegura(),
+                'min:6',
             ],
         ];
     }

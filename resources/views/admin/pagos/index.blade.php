@@ -99,14 +99,14 @@
 
                 <div id="campo_rechazo" class="hidden transition-all">
                     <label class="block text-[10px] font-black text-[#dc043c] uppercase tracking-widest mb-1.5">Motivo de Rechazo *</label>
-                    <textarea name="motivo_rechazo" id="motivo_rechazo" rows="2" placeholder="Ej: El número de operación no figura en el extracto. El stock será liberado." 
+                    <textarea name="motivo_rechazo" id="motivo_rechazo" rows="2" maxlength="255" placeholder="Ej: El número de operación no figura en el extracto. El stock será liberado." 
                         class="w-full bg-[#dc043c]/5 border border-[#dc043c]/20 rounded-xl p-3 text-sm focus:ring-2 focus:ring-[#dc043c] text-[#343c4c]"></textarea>
                     <p class="text-[9px] font-bold text-[#dc043c] mt-1 uppercase tracking-wider">El cliente recibirá esta notificación.</p>
                 </div>
 
                 <div>
                     <label class="block text-[10px] font-black text-[#343c4c] uppercase tracking-widest mb-1.5">Observaciones Internas</label>
-                    <textarea name="observaciones" rows="2" placeholder="Ej: Depósito verificado mediante Banco Unión." 
+                    <textarea name="observaciones" rows="2" maxlength="500" placeholder="Ej: Depósito verificado mediante Banco Unión." 
                         class="w-full bg-[#f4f4f4] border-none rounded-xl p-3 text-sm focus:ring-2 focus:ring-[#0464a4] text-[#343c4c]"></textarea>
                 </div>
             </div>
@@ -160,5 +160,12 @@
             btnSubmit.classList.add('bg-[#0464a4]');
         }
     }
+
+    // Prevención de Doble Envío (Race Conditions)
+    document.getElementById('cajaForm').addEventListener('submit', function() {
+        const btnSubmit = document.getElementById('btnSubmitModal');
+        btnSubmit.disabled = true;
+        btnSubmit.innerHTML = '<span class="flex items-center justify-center"><svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>Procesando...</span>';
+    });
 </script>
 @endsection
